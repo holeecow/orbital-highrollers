@@ -1,3 +1,5 @@
+import blackjackTable from "./images/blackjack_table.jpeg";
+
 export default function Hero() {
   return (
     <div>
@@ -5,8 +7,12 @@ export default function Hero() {
         id="up"
         class="bg-center bg-fixed bg-no-repeat bg-center bg-cover h-screen relative"
       >
-        <div class="h-screen bg-opacity-50 bg-black flex items-center justify-center">
-          <div class="mx-2 text-center">
+        <div
+          class="min-h-screen bg-cover bg-center bg-no-repeat
+                 flex items-center justify-center"
+          style={{ backgroundImage: `url(${blackjackTable})` }}
+        >
+          <div class="mx-2 text-center border-solid border-2 border-gray-200 bg-gray-900 bg-opacity-50 rounded-lg p-10">
             <h1 class="text-gray-100 font-extrabold text-4xl xs:text-5xl md:text-6xl">
               Master Blackjack like a pro
             </h1>
@@ -18,7 +24,7 @@ export default function Hero() {
                 Practice Rounds
               </button>
               <a href="#about">
-                <button class="p-2 my-5 mx-2 bg-transparent border-2 bg-indigo-200 bg-opacity-75 hover:bg-opacity-100 border-indigo-700 rounded hover:border-indigo-800 font-bold text-indigo-800 shadow-md transition duration-500 md:text-lg">
+                <button class="p-2 my-5 mx-2 bg-transparent border-2 bg-indigo-200 bg-opacity-75 hover:bg-opacity-100 border-indigo-700 rounded hover:border-indigo-800 font-bold text-white shadow-md transition duration-500 md:text-lg">
                   Credit Rounds
                 </button>
               </a>
