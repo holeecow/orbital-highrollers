@@ -1,12 +1,12 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import React, { useState } from "react";
-import { auth } from "../../firebase.js";
+import { useState } from "react";
+import { auth } from "../../firebase";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const SignUp = (e) => {
+  const SignUp = async (e) => {
     e.preventDefault(); // Prevent reloading the page on form submission
 
     createUserWithEmailAndPassword(auth, email, password)
@@ -33,7 +33,8 @@ export default function Signup() {
             </h1>
 
             <p className="mt-4 text-gray-500 dark:text-gray-400">
-              Let's get you all set up so you can begin setting up your profile
+              {/* &rsquo is a html identity since quotation marks are not accepted */}
+              Let&rsquo;s get you all set up so you can begin setting up your profile
               and start tracking your moves.
             </p>
 

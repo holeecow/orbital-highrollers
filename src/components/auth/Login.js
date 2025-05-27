@@ -1,46 +1,31 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import React, { useState } from "react";
 import { auth } from "../../firebase.js"; // Adjust the import based on your firebase setup
 import { signInWithEmailAndPassword } from "firebase/auth"; // Import the sign-in function
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate(); // Hook to programmatically navigate after sign-in
+  const router = useRouter(); // Hook to programmatically navigate after sign-in
 
   const signIn = async (e) => {
-    //   e.preventDefault(); // Prevent reloading the page on form submission
-    //   signInWithEmailAndPassword(auth, email, password)
-    //     .then((userCredential) => {
-    //       // Signed in
-    //       const user = userCredential.user;
-    //       console.log("User signed in:", user);
-    //       // Redirect or perform any other action after successful sign-in
-    //     })
-    //     .catch((error) => {
-    //       const errorCode = error.code;
-    //       const errorMessage = error.message;
-    //       console.error("Error signing in:", errorCode, errorMessage);
-    //       // Handle errors here (e.g., show an alert or message)
-    //     });
-    // };
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/authdetails"); // ✅ navigate when the user really is signed in
+      router.push("/authdetails"); // ✅ navigate when the user really is signed in
     } catch (err) {
-      // console.error(err.code, err.message);
+      console.error(err.code, err.message);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900">
-      <div className="flex justify-center h-screen">
-        <div className="flex items-center w-full max-w-md px-6 mx-auto lg:w-2/6">
+    <div className="min-h-screen bg-cover bg-center flex items-center justify-center">
+      <div className="flex justify-center">
+        <div className="flex items-center mx-auto ">
           <div className="flex-1">
             <div className="text-center">
-              <div className="flex justify-center mx-auto">
+              <div className="flex justify-center mx-auto ">
                 <img
                   className="w-auto h-7 sm:h-8"
                   src="https://merakiui.com/images/logo.svg"
@@ -82,7 +67,7 @@ export default function Login() {
                       Password
                     </label>
                     <Link
-                      to="/"
+                      href="/"
                       className="text-sm text-gray-400 focus:text-blue-500 hover:text-blue-500 hover:underline"
                     >
                       Forgot password?
@@ -114,12 +99,11 @@ export default function Login() {
               <p className="mt-6 text-sm text-center text-gray-400">
                 Don&#x27;t have an account yet?{" "}
                 <Link
-                  to="/signup"
+                  href="/signup"
                   className="text-blue-500 focus:outline-none focus:underline hover:underline"
                 >
-                  Sign up
+                  Sign up.
                 </Link>
-                .
               </p>
             </div>
           </div>

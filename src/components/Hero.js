@@ -1,37 +1,28 @@
-import blackjackTable from "../images/blackjack_table.jpeg";
-
 export default function Hero() {
   return (
-    <div>
-      <header
-        id="up"
-        className="bg-center bg-fixed bg-no-repeat bg-cover h-screen relative"
-      >
-        <div
-          className="min-h-screen bg-cover bg-center bg-no-repeat
-                 flex items-center justify-center"
-          style={{ backgroundImage: `url(${blackjackTable})` }}
-        >
-          <div className="mx-2 text-center border-solid border-2 border-gray-200 bg-gray-900 bg-opacity-50 rounded-lg p-10">
-            <h1 className="text-gray-100 font-extrabold text-4xl xs:text-5xl md:text-6xl">
-              Master Blackjack like a pro
-            </h1>
-            <h2 className="text-gray-200 font-extrabold text-3xl xs:text-4xl md:text-5xl leading-tight">
-              Play against the dealer and win big!
-            </h2>
-            <div className="inline-flex">
-              <button className="p-2 my-5 mx-2 bg-indigo-700 hover:bg-indigo-800 font-bold text-white rounded border-2 border-transparent hover:border-indigo-800 shadow-md transition duration-500 md:text-xl">
-                Practice Rounds
-              </button>
-              <a href="#about">
-                <button className="p-2 my-5 mx-2 bg-transparent border-2 bg-indigo-200 bg-opacity-75 hover:bg-opacity-100 border-indigo-700 rounded hover:border-indigo-800 font-bold text-white shadow-md transition duration-500 md:text-lg">
-                  Credit Rounds
-                </button>
-              </a>
-            </div>
+    <div
+      className="hero min-h-screen"
+      style={{
+        backgroundImage: "url(/images/blackjack_table.jpeg)",
+      }}
+    >
+      <div className="hero-overlay"></div>
+      <div className="hero-content text-neutral-content text-center">
+        <div className="max-w-md">
+          <h1 className="mb-5 text-5xl font-bold">
+            Master Blackjack Like a Pro!
+          </h1>
+          <p className="mb-5">
+            Play against the dealer and win big! Practice your skills with our
+            free rounds or test your luck with credit rounds. Join us now and
+            become a Blackjack champion!
+          </p>
+          <div className="flex w-full justify-center gap-8">
+            <button className="btn btn-outline">Practice Rounds</button>
+            <button className="btn btn-dash">Credit Rounds</button>{" "}
           </div>
         </div>
-      </header>
+      </div>
     </div>
   );
 }
