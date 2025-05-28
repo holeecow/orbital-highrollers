@@ -6,12 +6,13 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBJEVIiOA9jrzYnPsSkn_7yFH9M_r2VoJM",
-  authDomain: "high-rollers-3ace2.firebaseapp.com",
-  projectId: "high-rollers-3ace2",
-  storageBucket: "high-rollers-3ace2.firebasestorage.app",
-  messagingSenderId: "21522508567",
-  appId: "1:21522508567:web:27fc62662ab77321fba552",
+  apiKey: "AIzaSyCGYMbdNLlI1do6Ey0nRfe8PK3rm2RH_08",
+  authDomain: "orbital-59b2f.firebaseapp.com",
+  projectId: "orbital-59b2f",
+  storageBucket: "orbital-59b2f.firebasestorage.app",
+  messagingSenderId: "424217846904",
+  appId: "1:424217846904:web:e955a6d88121ee019cf98d",
+  measurementId: "G-JH508TV87S"
 };
 
 // Initialize Firebase
