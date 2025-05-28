@@ -3,7 +3,7 @@ export default function Hero() {
     <div
       className="hero min-h-screen"
       style={{
-        backgroundImage: "url(/images/blackjack_table.jpeg)",
+        backgroundImage: "url(/blackjack_table.jpeg)",
       }}
     >
       <div className="hero-overlay"></div>

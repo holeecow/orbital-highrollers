@@ -71,7 +71,7 @@ export default function Signup() {
               <button
                 type="submit"
                 className="
-              flex w-full px-6 py-3 tracking-wide text-white transition-colors duration-300 transform  bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50"
+              flex w-full px-6 py-3 tracking-wide text-white transition-colors duration-300 transform  bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50 cursor-pointer"
               >
                 Sign Up
               </button>
