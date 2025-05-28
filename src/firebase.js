@@ -6,13 +6,13 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCGYMbdNLlI1do6Ey0nRfe8PK3rm2RH_08",
-  authDomain: "orbital-59b2f.firebaseapp.com",
-  projectId: "orbital-59b2f",
-  storageBucket: "orbital-59b2f.firebasestorage.app",
-  messagingSenderId: "424217846904",
-  appId: "1:424217846904:web:e955a6d88121ee019cf98d",
-  measurementId: "G-JH508TV87S"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: NEXT_PUBLIC_MEASUREMENT_ID
 };
 
 // Initialize Firebase
