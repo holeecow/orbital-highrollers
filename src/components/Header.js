@@ -41,13 +41,13 @@ export default function Header() {
             className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4"
           >
             Strategies
-          </Link>
-          <a
-            href="#responsive-header"
+          </a>
+          <Link
+            href="/about"
             className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white"
           >
             About
-          </a>
+          </Link>
         </div>
         {!loading &&
           (user ? (
