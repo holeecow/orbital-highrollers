@@ -42,12 +42,12 @@ export default function Header() {
           >
             Strategies
           </a>
-          <a
-            href="#responsive-header"
+          <Link
+            href="/about"
             className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white"
           >
             About
-          </a>
+          </Link>
         </div>
         {!loading &&
           (user ? (
