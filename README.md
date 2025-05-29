@@ -36,8 +36,6 @@ High Rollers lets you practise risk-free, shows the mathematically optimal move 
 
 ## Screenshots <a name="screenshots"></a>
 
-> _(Add images once the UI is in place – suggested shots: Landing Hero, Hand in Play with Hint, Post-Game Summary, Stats Dashboard.)_
-
 ---
 
 ## Tech Stack <a name="tech-stack"></a>
