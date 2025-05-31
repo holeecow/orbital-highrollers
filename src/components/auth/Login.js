@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link"; // Use next/link for navigation in Next.js
 import React, { useState } from "react";
 import { auth } from "../../firebase.js"; // Adjust the import based on your firebase setup
 import {
