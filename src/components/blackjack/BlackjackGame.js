@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useShoe } from "../hooks/Hook";
+
+const { GetRecommendedPlayerAction } = require("blackjack-strategy");
 
 function CardFace({ card }) {
   return (
@@ -21,6 +23,7 @@ function CardBack() {
   );
 }
 
+//Function to calculate the number of points of the cards
 function cardPoints(card) {
   const v = card.value; // "ACE", "7", "KING", …
   if (v === "ACE") return [1, 11];
@@ -28,8 +31,9 @@ function cardPoints(card) {
   return [Number(v)];
 }
 
+//Function to calculate the total points in the player's hand
 /** Highest total ≤ 21, else the minimum total (bust). */
-function handTotal(hand) {
+function handTotal(hand) {  
   const totals = hand.reduce(
     (acc, card) => cardPoints(card).flatMap((p) => acc.map((t) => t + p)),
     [0]
@@ -39,19 +43,35 @@ function handTotal(hand) {
 }
 
 export default function BlackjackGame() {
+  // State for controlling the Shoe
   const { drawCards, ready, remaining } = useShoe();
-  const [player, setPlayer] = useState([]); // array of card objects
+
+  // State for controlling the cards the player has
+  const [player, setPlayer] = useState([]);
+  
+  // State for controlling the cards the dealer has
   const [dealer, setDealer] = useState([]);
 
-  const [phase, setPhase] = useState("waiting"); // waiting | playing | finished
-  const [result, setResult] = useState(null); // win, lose, push
+  // State for the phase of the game: waiting | playing | finished
+  const [phase, setPhase] = useState("waiting"); 
+
+  // State for the result of the game: win | lose | push
+  const [result, setResult] = useState(null); 
+
+  // State for controlling whether it is the dealer's turn
   const [dealerTurn, setDealerTurn] = useState(false);
 
+  //State for the summary of the Game
+  const [summary, setSummary] = useState("");
+
+  //useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
+    // runDealer is a Promise that only only runs when it is the dealerTurn
     const runDealer = async () => {
       if (!dealerTurn) return;
 
       let current = [...dealer];
+      // Dealer only draws when his current hand is less than 17
       while (handTotal(current) < 17) {
         const [card] = await drawCards(1);
         current.push(card);
@@ -76,6 +96,7 @@ export default function BlackjackGame() {
     }
   }, [dealerTurn, dealer, player, drawCards]);
 
+  // useEffect hook to handle the result of the game 
   useEffect(() => {
     if (handTotal(player) === 21 && player.length === 2) {
       setResult("win");
@@ -93,7 +114,8 @@ export default function BlackjackGame() {
 
   const deal = async () => {
     if (!ready) return;
-    const cards = await drawCards(4); // 2 for you, 2 for dealer
+    // Draw 4 cards, 2 for the player and 2 for dealer
+    const cards = await drawCards(4);
     setPlayer([cards[0], cards[2]]);
     setDealer([cards[1], cards[3]]);
     setPhase("playing");
@@ -114,6 +136,20 @@ export default function BlackjackGame() {
 
   const stand = () => {
     setDealerTurn(true);
+  };
+
+  const summaryRef = useRef(null);
+
+  const openSummary = () => {
+    const playerCards = cardPoints(player[0]).concat(cardPoints(player[1]));
+    const dealerCards = cardPoints(dealer[0])[0];
+    const recomendation = GetRecommendedPlayerAction(playerCards, dealerCards, 1, false, null);
+    setSummary(recomendation);
+    summaryRef.current?.showModal();
+  };
+
+  const closeSummary = () => {
+    summaryRef.current?.close();
   };
 
   return (
@@ -173,6 +209,18 @@ export default function BlackjackGame() {
           </>
         )}
       </div>
+      {phase === "finished" && (
+        <button className="btn" onClick={openSummary}>Summary!</button>
+      )}
+      
+      <dialog ref={summaryRef} className="p-6 rounded-lg bg-white text-black">
+        <h2 className="text-xl mb-4">Game Summary</h2>
+        <ul className="list-disc pl-5 mb-6">
+          <li>Recommendation: {summary}</li>
+        </ul>
+        <button onClick={closeSummary}>Close</button>
+      </dialog>
+
       <p className="text-black">{phase}</p>
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
     </main>

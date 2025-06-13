@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "blackjack-strategy": "^1.4.0",
     "daisyui": "^5.0.38",
     "firebase": "^11.8.1",
+    "install": "^0.13.0",
     "next": "15.3.2",
+    "npm": "^11.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
