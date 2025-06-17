@@ -23,6 +23,38 @@ function CardBack() {
   );
 }
 
+function ActionFeedback({ messages }) {
+  return (
+    <div className="fixed top-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded max-w-xs text-sm">
+      {messages.map((msg, index) => {
+        const isWrong = msg.includes("wrong");
+        return (
+          <div key={index} className={isWrong ? "text-red-500" : "text-green-400"}>
+            {msg}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatsTracker({ correct, wrong, hands }) {
+  const totalMoves = correct + wrong;
+  const score = totalMoves > 0 ? Math.round((correct / totalMoves) * 100) : 0;
+  return (
+    <div className="fixed bottom-4 right-4 bg-black bg-opacity-70 text-white p-3 rounded text-sm w-36">
+      <div>
+        <span className="text-green-400">{correct}</span> CORRECT
+      </div>
+      <div>
+        <span className="text-red-500">{wrong}</span> WRONG
+      </div>
+      <div>{score}% SCORE</div>
+      <div>{hands} HANDS PLAYED</div>
+    </div>
+  );
+}
+
 //Function to calculate the number of points of the cards
 function cardPoints(card) {
   const v = card.value; // "ACE", "7", "KING", …
@@ -61,8 +93,11 @@ export default function BlackjackGame() {
   // State for controlling whether it is the dealer's turn
   const [dealerTurn, setDealerTurn] = useState(false);
 
-  //State for the summary of the Game
-  const [summary, setSummary] = useState("");
+  // State for controlling the feedback and stats of the game
+  const [feedbackMessages, setFeedbackMessages] = useState([]); // NEW
+  const [correctMoves, setCorrectMoves] = useState(0);         // NEW
+  const [wrongMoves, setWrongMoves] = useState(0);             // NEW
+  const [handsPlayed, setHandsPlayed] = useState(0); 
 
   //useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
@@ -112,8 +147,18 @@ export default function BlackjackGame() {
     }
   }, [player]);
 
+  //useEffect hook to update the number of hands played
+  useEffect(() => {
+    if (phase === "finished") {
+      setHandsPlayed(h => h + 1);
+    }
+  }, [phase]);
+
   const deal = async () => {
     if (!ready) return;
+    setFeedbackMessages([]); // reset the feedback window when the player deals a new hand
+    setResult(null);
+
     // Draw 4 cards, 2 for the player and 2 for dealer
     const cards = await drawCards(4);
     setPlayer([cards[0], cards[2]]);
@@ -124,36 +169,58 @@ export default function BlackjackGame() {
 
   const hit = async () => {
     if (phase !== "playing") return;
+    const playerValues = player.map(cardPoints); //maps all the cards to their values
+    const dealerUpValue = dealer[0] ? cardPoints(dealer[0]) : 0; //if dealer card exists, then calculate the card point
+    const recommended = GetRecommendedPlayerAction(
+      playerValues,
+      dealerUpValue,
+      1,
+      true,
+      null
+    );
+    const isCorrect = recommended === "hit";
+    const msg = `Dealer ${dealerUpValue}, Player ${handTotal(player)}: Hit (${isCorrect ? "correct" : `wrong, you should ${recommended}`})`;
+  
+    setFeedbackMessages((prev) => [msg, ...prev]); // append msg to the existing feedback
+
+    if (isCorrect) setCorrectMoves((c) => c + 1);  
+    else setWrongMoves((w) => w + 1);             
     if (handTotal(player) < 22) {
       const [card] = await drawCards(1);
       setPlayer((p) => [...p, card]);
     } else {
       setResult("lose");
       setPhase("finished");
-      //   setDealerTurn(false);
+    
     }
   };
 
   const stand = () => {
+    if (phase !== "playing") return;
+    // Evaluate correctness
+    const playerVals = player.map(cardPoints);
+    const dealerUpVal = dealer[0] ? cardPoints(dealer[0]) : 0;
+    const recommended = GetRecommendedPlayerAction(
+      playerVals,
+      dealerUpVal,
+      1,
+      true,
+      null
+    );
+    const isCorrect = recommended === "stand";
+    const msg = `Dealer ${dealerUpVal}, Player ${handTotal(player)}: Stand (${isCorrect ? "correct" : `wrong, you should ${recommended}`})`;
+    // Append feedback
+    setFeedbackMessages((prev) => [msg, ...prev]); 
+    if (isCorrect) setCorrectMoves((c) => c + 1);  
+    else setWrongMoves((w) => w + 1);             
     setDealerTurn(true);
-  };
-
-  const summaryRef = useRef(null);
-
-  const openSummary = () => {
-    const playerCards = cardPoints(player[0]).concat(cardPoints(player[1]));
-    const dealerCards = cardPoints(dealer[0])[0];
-    const recomendation = GetRecommendedPlayerAction(playerCards, dealerCards, 1, false, null);
-    setSummary(recomendation);
-    summaryRef.current?.showModal();
-  };
-
-  const closeSummary = () => {
-    summaryRef.current?.close();
   };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6">
+      <ActionFeedback messages={feedbackMessages} />
+      <StatsTracker correct={correctMoves} wrong={wrongMoves} hands={handsPlayed} />
+
       <h1 className="text-3xl font-bold text-black">Blackjack</h1>
 
       {/* dealer */}
@@ -209,17 +276,6 @@ export default function BlackjackGame() {
           </>
         )}
       </div>
-      {phase === "finished" && (
-        <button className="btn" onClick={openSummary}>Summary!</button>
-      )}
-      
-      <dialog ref={summaryRef} className="p-6 rounded-lg bg-white text-black">
-        <h2 className="text-xl mb-4">Game Summary</h2>
-        <ul className="list-disc pl-5 mb-6">
-          <li>Recommendation: {summary}</li>
-        </ul>
-        <button onClick={closeSummary}>Close</button>
-      </dialog>
 
       <p className="text-black">{phase}</p>
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
