@@ -68,7 +68,7 @@ function cardPoints(card) {
 
 // Function to calculate the pip value of a card (For the sole purpose of passing into GetRecommendedPlayerAction function, under blackjack-strategy lib)
 function pipValue(card) {
-  if (card.value === "ACE") return 11; // treat Ace as 11 (soft logic is inside the lib)
+  if (card.value === "ACE") return 1; // treat Ace as 1 (soft logic is inside the lib)
   if (["KING", "QUEEN", "JACK"].includes(card.value)) return 10;
   return Number(card.value); // "2"-"10"
 }
