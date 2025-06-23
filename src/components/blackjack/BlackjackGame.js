@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useShoe } from "../hooks/Hook";
+import { useAuth } from "../../contexts/AuthContext";
+import { db } from "../../firebase";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 
 const { GetRecommendedPlayerAction } = require("blackjack-strategy");
 
@@ -41,9 +44,18 @@ function ActionFeedback({ messages }) {
   );
 }
 
-function StatsTracker({ correct, wrong, hands }) {
+function StatsTracker({ correct, wrong, hands, showZeroes }) {
   const totalMoves = correct + wrong;
   const score = totalMoves > 0 ? Math.round((correct / totalMoves) * 100) : 0;
+
+  if (!showZeroes && totalMoves === 0 && hands === 0) {
+    return (
+      <div className="fixed bottom-4 right-4 bg-black bg-opacity-70 text-white p-3 rounded text-sm w-36">
+        Loading stats...
+      </div>
+    );
+  }
+
   return (
     <div className="fixed bottom-4 right-4 bg-black bg-opacity-70 text-white p-3 rounded text-sm w-36">
       <div>
@@ -133,6 +145,73 @@ export default function BlackjackGame() {
   const [correctMoves, setCorrectMoves] = useState(0);
   const [wrongMoves, setWrongMoves] = useState(0);
   const [handsPlayed, setHandsPlayed] = useState(0);
+
+  const { user, loading: authLoading } = useAuth(); // Get user and loading state
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Effect to load stats for a logged-in user
+  useEffect(() => {
+    if (authLoading) {
+      return; // Wait for auth state to be determined
+    }
+
+    if (!user) {
+      // Not logged in, reset stats
+      setCorrectMoves(0);
+      setWrongMoves(0);
+      setHandsPlayed(0);
+      setStatsLoading(false);
+      return;
+    }
+
+    // For a logged-in user, set up a real-time listener
+    setStatsLoading(true);
+    const statsRef = doc(db, "blackjackStats", user.uid);
+
+    const unsubscribe = onSnapshot(
+      statsRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setCorrectMoves(data.correctMoves || 0);
+          setWrongMoves(data.wrongMoves || 0);
+          setHandsPlayed(data.handsPlayed || 0);
+        } else {
+          // New user for the game, stats are 0
+          setCorrectMoves(0);
+          setWrongMoves(0);
+          setHandsPlayed(0);
+        }
+        setStatsLoading(false); // Stats are loaded
+      },
+      (error) => {
+        console.error("Error with snapshot listener:", error);
+        setStatsLoading(false);
+      }
+    );
+
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
+  }, [user, authLoading]);
+
+  // Effect to update Firestore when stats change for a logged-in user
+  useEffect(() => {
+    // Do not save while auth is loading, stats are loading, or if not logged in
+    if (authLoading || statsLoading || !user) {
+      return;
+    }
+
+    const statsRef = doc(db, "blackjackStats", user.uid);
+    setDoc(
+      statsRef,
+      {
+        correctMoves,
+        wrongMoves,
+        handsPlayed,
+      },
+      { merge: true }
+    );
+  }, [correctMoves, wrongMoves, handsPlayed, user, authLoading, statsLoading]);
 
   //useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
@@ -369,6 +448,7 @@ export default function BlackjackGame() {
         correct={correctMoves}
         wrong={wrongMoves}
         hands={handsPlayed}
+        showZeroes={!user || !statsLoading}
       />
       <h1 className="text-3xl font-bold text-black">Blackjack</h1>
       <p className="mt-2  text-black">
@@ -428,8 +508,8 @@ export default function BlackjackGame() {
       <div
         className={phase === "playing" ? "flex gap-4" : "flex justify-center"}
       >
-        <button className="btn" onClick={deal}>
-          Deal
+        <button className="btn" onClick={deal} disabled={statsLoading}>
+          {statsLoading ? "Loading..." : "Deal"}
         </button>
         {phase === "playing" && (
           <>
