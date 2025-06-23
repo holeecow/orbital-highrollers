@@ -42,7 +42,7 @@ export default function Header() {
           >
             Strategies
           </Link>
-          
+
           <Link
             href="/about"
             className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white"
@@ -56,6 +56,9 @@ export default function Header() {
               <span className="text-teal-200">
                 {user.displayName || user.email}
               </span>
+              <Link href="/profile" className="btn btn-outline">
+                Profile
+              </Link>
               <button onClick={signUserOut} className="btn btn-outline">
                 Sign out
               </button>
