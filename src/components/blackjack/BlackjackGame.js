@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useShoe } from "../hooks/Hook";
 import { useAuth } from "../../contexts/AuthContext";
 import { db } from "../../firebase";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
 
 const { GetRecommendedPlayerAction } = require("blackjack-strategy");
 
@@ -148,6 +148,12 @@ export default function BlackjackGame() {
 
   const { user, loading: authLoading } = useAuth(); // Get user and loading state
   const [statsLoading, setStatsLoading] = useState(true);
+  const [credits, setCredits] = useState(0);
+  const [bet, setBet] = useState(10);
+  const [prevBet, setPrevBet] = useState(10);
+  const [betInput, setBetInput] = useState(10);
+  const [betLocked, setBetLocked] = useState(false);
+  const [mode, setMode] = useState(user ? "credit" : "practice");
 
   // Effect to load stats for a logged-in user
   useEffect(() => {
@@ -176,11 +182,13 @@ export default function BlackjackGame() {
           setCorrectMoves(data.correctMoves || 0);
           setWrongMoves(data.wrongMoves || 0);
           setHandsPlayed(data.handsPlayed || 0);
+          setCredits(data.credits || 0);
         } else {
           // New user for the game, stats are 0
           setCorrectMoves(0);
           setWrongMoves(0);
           setHandsPlayed(0);
+          setCredits(0);
         }
         setStatsLoading(false); // Stats are loaded
       },
@@ -194,26 +202,7 @@ export default function BlackjackGame() {
     return () => unsubscribe();
   }, [user, authLoading]);
 
-  // Effect to update Firestore when stats change for a logged-in user
-  useEffect(() => {
-    // Do not save while auth is loading, stats are loading, or if not logged in
-    if (authLoading || statsLoading || !user) {
-      return;
-    }
-
-    const statsRef = doc(db, "blackjackStats", user.uid);
-    setDoc(
-      statsRef,
-      {
-        correctMoves,
-        wrongMoves,
-        handsPlayed,
-      },
-      { merge: true }
-    );
-  }, [correctMoves, wrongMoves, handsPlayed, user, authLoading, statsLoading]);
-
-  //useEffect hook to handle the logic when it is the dealer's turn
+  // useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
     const runDealer = async () => {
       if (!dealerTurn) return;
@@ -267,15 +256,29 @@ export default function BlackjackGame() {
   }, [phase]);
 
   const deal = async () => {
-    if (!ready) return;
+    if (!ready || betLocked) return;
+    if (mode === "credit") {
+      if (betInput > credits) {
+        setFeedbackMessages(["Not enough credits for this bet."]);
+        return;
+      }
+    }
     setFeedbackMessages([]);
     setResults([]);
     setPlayerHands([[]]);
-    setHandBets([10]);
+    setHandBets([betInput]);
     setCurrentHandIndex(0);
     setHasSplit(false);
     setDealer([]);
     setPhase("waiting");
+    setPrevBet(betInput);
+    setBet(betInput);
+    setBetLocked(true);
+    // Deduct bet from credits (credit mode only)
+    if (mode === "credit" && user) {
+      const userRef = doc(db, "blackjackStats", user.uid);
+      await updateDoc(userRef, { credits: credits - betInput });
+    }
     // Draw 4 cards, 2 for the player and 2 for dealer
     const cards = await drawCards(4);
     setPlayerHands([[cards[0], cards[2]]]);
@@ -298,6 +301,21 @@ export default function BlackjackGame() {
   const split = async () => {
     if (!canSplit()) return;
     const currentHand = playerHands[currentHandIndex];
+    if (mode === "credit" && handBets[currentHandIndex] > credits) {
+      setFeedbackMessages([
+        "Not enough credits to split.",
+        ...feedbackMessages,
+      ]);
+      return;
+    }
+
+    // Deduct additional bet for split (credit mode only)
+    if (mode === "credit" && user) {
+      const userRef = doc(db, "blackjackStats", user.uid);
+      await updateDoc(userRef, {
+        credits: credits - handBets[currentHandIndex],
+      });
+    }
     const playerValues = currentHand.map(pipValue);
     const dealerUpValue = dealer[0] ? pipValue(dealer[0]) : 0;
     const recommended = GetRecommendedPlayerAction(
@@ -340,6 +358,20 @@ export default function BlackjackGame() {
   const double = async () => {
     if (!canDouble()) return;
     const currentHand = playerHands[currentHandIndex];
+    if (mode === "credit" && handBets[currentHandIndex] > credits) {
+      setFeedbackMessages([
+        "Not enough credits to double.",
+        ...feedbackMessages,
+      ]);
+      return;
+    }
+    // Deduct additional bet (credit mode only)
+    if (mode === "credit" && user) {
+      const userRef = doc(db, "blackjackStats", user.uid);
+      await updateDoc(userRef, {
+        credits: credits - handBets[currentHandIndex],
+      });
+    }
     const playerValues = currentHand.map(pipValue);
     const dealerUpValue = dealer[0] ? pipValue(dealer[0]) : 0;
     const recommended = GetRecommendedPlayerAction(
@@ -441,8 +473,76 @@ export default function BlackjackGame() {
     }
   };
 
+  // Update credits after win/lose/push
+  useEffect(() => {
+    if (!user || results.length === 0) {
+      setBetLocked(false);
+      return;
+    }
+    if (mode !== "credit") {
+      setBetLocked(false);
+      return;
+    }
+    let payout = 0;
+    results.forEach((result, i) => {
+      const b = handBets[i];
+      if (result === "win") payout += b * 2;
+      else if (result === "push") payout += b;
+      // lose: no payout
+    });
+    if (payout > 0) {
+      const userRef = doc(db, "blackjackStats", user.uid);
+      updateDoc(userRef, {
+        credits: credits + payout,
+        correctMoves,
+        wrongMoves,
+        handsPlayed,
+      });
+    }
+    setBetLocked(false);
+  }, [results]);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6">
+      <div className="flex gap-4 mb-2">
+        <button
+          className={`btn ${mode === "practice" ? " text-black" : ""}`}
+          onClick={() => setMode("practice")}
+          disabled={mode === "practice"}
+        >
+          Practice
+        </button>
+        <button
+          className={`btn ${
+            mode === "credit" ? "bg-green-600 text-black" : ""
+          }`}
+          onClick={() => setMode("credit")}
+          disabled={!user || mode === "credit"}
+        >
+          Credit
+        </button>
+      </div>
+      {mode === "credit" && (
+        <div className="flex items-center gap-4 mb-2">
+          <span className="font-semibold text-black">Credits: {credits}</span>
+          <input
+            type="number"
+            min={1}
+            max={credits}
+            value={betInput}
+            onChange={(e) => setBetInput(Number(e.target.value))}
+            disabled={phase === "playing" || betLocked}
+            className="border rounded p-2 w-24 text-black"
+          />
+          <button
+            className="btn  text-white"
+            onClick={() => setBetInput(prevBet)}
+            disabled={phase === "playing" || betLocked}
+          >
+            Use Previous Bet
+          </button>
+        </div>
+      )}
       <ActionFeedback messages={feedbackMessages} />
       <StatsTracker
         correct={correctMoves}
@@ -487,7 +587,11 @@ export default function BlackjackGame() {
               ))}
             </section>
             <p className=" text-black">
-              Hand {index + 1}: {handTotal(hand) || 0} (Bet: ${handBets[index]})
+              {mode === "credit"
+                ? `Hand ${index + 1}: ${handTotal(hand) || 0} (Bet: ${
+                    handBets[index]
+                  })`
+                : `Hand ${index + 1}: ${handTotal(hand) || 0}`}
             </p>
           </div>
         ))}

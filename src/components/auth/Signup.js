@@ -34,8 +34,8 @@ export default function Signup() {
 
             <p className="mt-4 text-gray-500 dark:text-gray-400">
               {/* &rsquo is a html identity since quotation marks are not accepted */}
-              Let&rsquo;s get you all set up so you can begin setting up your profile
-              and start tracking your moves.
+              Let&rsquo;s get you all set up so you can begin setting up your
+              profile and start tracking your moves.
             </p>
 
             <form
