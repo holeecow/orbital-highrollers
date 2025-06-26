@@ -8,8 +8,13 @@ export default function BlackjackStrategies() {
       </h1>
 
       <p className="mb-6">
+<<<<<<< New-Features
         {`Blackjack isn&apos;t just a game of chance—strategy plays a big role in long-term success. 
         By following these three core strategies, YOU can significantly reduce the house edge and improve your decision-making at the table.`}
+=======
+        Blackjack isn&apos;t just a game of chance—strategy plays a big role in long-term success. 
+        By following these three core strategies, YOU can significantly reduce the house edge and improve your decision-making at the table.
+>>>>>>> main
       </p>
 
       {/*Strategy 1*/}
@@ -47,10 +52,17 @@ export default function BlackjackStrategies() {
         </h2>
         <p className="mb-2">
           When your total is 8 or less, always
+<<<<<<< New-Features
           <span className="font-bold"> hit</span>. You can&apos;t bust, so there&apos;s no
           reason to avoid taking another card. The goal is to get closer to 21
           without going over, and hands below 9 leave plenty of room for
           improvement.
+=======
+          <span className="font-bold">hit</span>. You can&apos;t bust, 
+          so there&apos;s no reason to avoid taking another card. The 
+          goal is to get closer to 21 without going over, and hands 
+          below 9 leave plenty of room for improvement.
+>>>>>>> main
         </p>
         <div
           tabIndex={0}
