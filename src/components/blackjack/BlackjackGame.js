@@ -292,7 +292,7 @@ export default function BlackjackGame() {
     return (
       phase === "playing" &&
       currentHand.length === 2 &&
-      currentHand[0].value === currentHand[1].value &&
+      pipValue(currentHand[0]) === pipValue(currentHand[1]) &&
       playerHands.length < 4 &&
       !hasSplit // Change depending if we want to allow for multiple splits
     );
