@@ -2,7 +2,7 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <div
-      className="hero min-h-screen"
+      className="hero h-full"
       style={{
         backgroundImage: "url(/blackjack_table.jpeg)",
       }}
@@ -20,9 +20,8 @@ export default function Hero() {
           </p>
           <div className="flex w-full justify-center gap-8">
             <Link href="/blackjackgame" className="btn btn-outline">
-              Practice Rounds
+              Play Now!
             </Link>
-            <button className="btn btn-dash">Credit Rounds</button>{" "}
           </div>
         </div>
       </div>

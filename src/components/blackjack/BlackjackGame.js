@@ -503,10 +503,12 @@ export default function BlackjackGame() {
   }, [results]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6">
-      <div className="flex gap-4 mb-2">
+    <main className="h-full flex flex-col items-center justify-center gap-6">
+      <div className="flex gap-4 mb-2 justify-center">
         <button
-          className={`btn ${mode === "practice" ? " text-black" : ""}`}
+          className={`btn ${
+            mode === "practice" ? " text-black" : "text-white"
+          }`}
           onClick={() => setMode("practice")}
           disabled={mode === "practice"}
         >
