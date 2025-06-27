@@ -118,18 +118,31 @@ export default function Profile() {
   const handleBuyCredits = async () => {
     setBuyLoading(true);
     try {
+      console.log("Sending request to create checkout session...");
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: buyAmount, userId: user.uid }),
       });
+
+      console.log("Response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API error response:", errorText);
+        throw new Error(`API error: ${res.status} - ${errorText}`);
+      }
+
       const data = await res.json();
+      console.log("API response data:", data);
+
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("Failed to start checkout session.");
+        alert("Failed to start checkout session: No URL received");
       }
     } catch (err) {
+      console.error("Error in handleBuyCredits:", err);
       alert("Error: " + err.message);
     } finally {
       setBuyLoading(false);
