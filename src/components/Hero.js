@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Hero() {
   return (
     <div
@@ -18,7 +19,9 @@ export default function Hero() {
             become a Blackjack champion!
           </p>
           <div className="flex w-full justify-center gap-8">
-            <button className="btn btn-outline">Practice Rounds</button>
+            <Link href="/blackjackgame" className="btn btn-outline">
+              Practice Rounds
+            </Link>
             <button className="btn btn-dash">Credit Rounds</button>{" "}
           </div>
         </div>

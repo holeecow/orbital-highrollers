@@ -1,8 +1,24 @@
 import Link from "next/link";
 import { useAuth } from "../contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 export default function Header() {
   const { user, loading, signUserOut } = useAuth();
+  const [credits, setCredits] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setCredits(0);
+      return;
+    }
+    const userRef = doc(db, "blackjackStats", user.uid);
+    const unsub = onSnapshot(userRef, (docSnap) => {
+      setCredits(docSnap.exists() ? docSnap.data().credits || 0 : 0);
+    });
+    return () => unsub();
+  }, [user]);
 
   return (
     <nav className="flex items-center  justify-between flex-wrap bg-teal-500 p-2">
@@ -42,7 +58,7 @@ export default function Header() {
           >
             Strategies
           </Link>
-          
+
           <Link
             href="/about"
             className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white"
@@ -55,7 +71,11 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <span className="text-teal-200">
                 {user.displayName || user.email}
+                {` | Credits: ${credits}`}
               </span>
+              <Link href="/profile" className="btn btn-outline">
+                Profile
+              </Link>
               <button onClick={signUserOut} className="btn btn-outline">
                 Sign out
               </button>
