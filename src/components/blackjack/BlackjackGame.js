@@ -97,7 +97,7 @@ function handTotal(hand) {
 }
 
 const stateOfGame = {
-  hitSoft17: true, // Does dealer hit soft 17
+  hitSoft17: false, // Does dealer hit soft 17
   surrender: "none", // Surrender offered - none, late, or early
   double: "none", // Double rules - none, 10or11, 9or10or11, any
   doubleRange: [0, 21], // Range of values you can double,
