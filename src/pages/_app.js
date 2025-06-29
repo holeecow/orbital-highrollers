@@ -7,7 +7,7 @@ export default function App({ Component, pageProps }) {
     <AuthProvider>
       <div className="flex flex-col h-screen">
         <Header /> {/* shows on every route */}
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-auto">
           <Component {...pageProps} />
         </main>
       </div>
