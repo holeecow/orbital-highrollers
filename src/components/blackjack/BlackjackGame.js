@@ -596,23 +596,26 @@ export default function BlackjackGame() {
   }, [phase]);
 
   return (
-    <main className="h-full flex flex-col items-center justify-center gap-6">
-      <div className="flex gap-4 mb-2 justify-center">
+    <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6">
+      <div className="flex items-center justify-center bg-gray-200 rounded-full p-1 border-2 border-gray-300 w-full max-w-xs">
         <button
-          className={`btn ${
-            mode === "practice" ? " text-black" : "text-white"
+          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out ${
+            mode === "practice"
+              ? "bg-white text-blue-600 shadow-sm"
+              : "bg-transparent text-gray-500"
           }`}
           onClick={() => setMode("practice")}
-          disabled={mode === "practice"}
         >
           Practice
         </button>
         <button
-          className={`btn ${
-            mode === "credit" ? "bg-green-600 text-black" : ""
-          }`}
+          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out ${
+            mode === "credit"
+              ? "bg-white text-green-600 shadow-sm"
+              : "bg-transparent text-gray-500"
+          } disabled:text-gray-400 disabled:cursor-not-allowed`}
           onClick={() => setMode("credit")}
-          disabled={!user || mode === "credit"}
+          disabled={!user}
         >
           Credit
         </button>
@@ -733,6 +736,6 @@ export default function BlackjackGame() {
       </div>
       <p className="text-black">{phase}</p>
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
-    </main>
+    </div>
   );
 }
