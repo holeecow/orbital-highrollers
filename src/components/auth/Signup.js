@@ -1,7 +1,13 @@
-import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
+  getAdditionalUserInfo,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { auth } from "../../firebase";
+import { auth, googleProvider } from "../../firebase";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -46,6 +52,34 @@ export default function Signup() {
       }
     }
   };
+
+  const signUpWithGoogle = async () => {
+    setError(null);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const additionalInfo = getAdditionalUserInfo(result);
+
+      if (additionalInfo.isNewUser) {
+        // If it's a new user, proceed to the homepage.
+        router.push("/"); // Navigate to home page on successful sign-up
+      } else {
+        // If the user already exists, sign them out and show an error.
+        await signOut(auth);
+        setError("An account with this email already exists. Please log in.");
+      }
+    } catch (err) {
+      // This catches other errors, like if the email exists with a different credential (e.g., password)
+      if (err.code === "auth/account-exists-with-different-credential") {
+        setError(
+          "An account with this email already exists. Please log in using your original method."
+        );
+      } else {
+        setError("Failed to sign up with Google. Please try again.");
+        console.error("Google sign-up error:", err.code, err.message);
+      }
+    }
+  };
+
   return (
     <section className="bg-white dark:bg-gray-900 ">
       <div className="flex min-h-screen ">
@@ -105,6 +139,15 @@ export default function Signup() {
                 Sign Up
               </button>
             </form>
+
+            <div className="mt-4">
+              <button
+                onClick={signUpWithGoogle}
+                className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
+              >
+                Sign up with Google
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
 import Link from "next/link"; // Use next/link for navigation in Next.js
 import React, { useState } from "react";
-import { auth } from "../../firebase.js"; // Adjust the import based on your firebase setup
+import { auth, googleProvider } from "../../firebase.js"; // Adjust the import based on your firebase setup
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  signInWithPopup,
 } from "firebase/auth"; // Import the sign-in function
 import { useRouter } from "next/router";
 
@@ -30,6 +31,17 @@ export default function Login() {
       }
     }
   };
+
+  const signInWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      router.push("/"); // Navigate to home page on successful sign-in
+    } catch (err) {
+      setError("Failed to sign in with Google. Please try again.");
+      console.error("Google sign-in error:", err.code, err.message);
+    }
+  };
+
   const handlePasswordReset = async () => {
     try {
       await sendPasswordResetEmail(auth, resetEmail);
@@ -161,6 +173,16 @@ export default function Login() {
                     {/* </Link> */}
                   </div>
                 </form>
+
+                <div className="mt-4">
+                  <button
+                    onClick={signInWithGoogle}
+                    className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
+                  >
+                    Sign in with Google
+                  </button>
+                </div>
+
                 <p className="mt-6 text-sm text-center text-gray-400">
                   Don&#x27;t have an account yet?{" "}
                   <Link
