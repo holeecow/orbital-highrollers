@@ -5,6 +5,8 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signInWithPopup,
+  getAdditionalUserInfo,
+  signOut,
 } from "firebase/auth"; // Import the sign-in function
 import { useRouter } from "next/router";
 
@@ -33,9 +35,20 @@ export default function Login() {
   };
 
   const signInWithGoogle = async () => {
+    setError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
-      router.push("/"); // Navigate to home page on successful sign-in
+      const result = await signInWithPopup(auth, googleProvider);
+      const additionalInfo = getAdditionalUserInfo(result);
+
+      if (additionalInfo.isNewUser) {
+        // This is a new user, which shouldn't happen on the login page.
+        // Sign them out and show an error.
+        await signOut(auth);
+        setError("No account found with this email. Please sign up.");
+      } else {
+        // Existing user, allow login.
+        router.push("/"); // Navigate to home page on successful sign-in
+      }
     } catch (err) {
       setError("Failed to sign in with Google. Please try again.");
       console.error("Google sign-in error:", err.code, err.message);
