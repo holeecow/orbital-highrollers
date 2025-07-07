@@ -12,7 +12,7 @@ function CardFace({ card }) {
     <img
       src={card.image}
       alt={`${card.value} of ${card.suit}`}
-      className="w-16 h-24 rounded shadow"
+      className="w-16 h-24 rounded shadow card-animate"
     />
   );
 }
@@ -120,7 +120,7 @@ const stateOfGame = {
 
 export default function BlackjackGame() {
   // State for controlling the Shoe
-  const { drawCards, ready, remaining } = useShoe();
+  const { drawCards, remaining, ready, newShoe } = useShoe();
 
   // State for controlling the player's hands (start with one hand)
   const [playerHands, setPlayerHands] = useState([[]]); // Array of hands
@@ -206,48 +206,82 @@ export default function BlackjackGame() {
   useEffect(() => {
     const runDealer = async () => {
       if (!dealerTurn) return;
+      if (
+        playerHands.length === 1 &&
+        handTotal(playerHands[0]) === 21 &&
+        playerHands[0].length === 2
+      ) {
+        setResults(["win"]);
+        setPhase("finished");
+        return;
+      }
       let current = [...dealer];
       while (handTotal(current) < 17) {
         const [card] = await drawCards(1);
         current.push(card);
         setDealer([...current]);
+        await new Promise((res) => setTimeout(res, 500)); // 500ms delay
       }
       // Evaluate each hand
       const newResults = playerHands.map((hand) => {
         const playerTotal = handTotal(hand);
         const dealerTotal = handTotal(current);
-        if (dealerTotal > 21 || (playerTotal > dealerTotal && playerTotal < 22))
+        if (playerTotal > 21) return "lose";
+        if (
+          (playerTotal == 21 && hand.length == 2) ||
+          dealerTotal > 21 ||
+          (playerTotal > dealerTotal && playerTotal < 22)
+        )
           return "win";
         if (playerTotal == dealerTotal) return "push";
         return "lose";
       });
       setResults(newResults);
       setPhase("finished");
-      setDealerTurn(false);
     };
     if (dealerTurn) {
       runDealer();
     }
-  }, [dealerTurn, dealer, playerHands, drawCards]);
+  }, [dealerTurn]); // was [dealerTurn, dealer, playerHands, drawCards]
+
+  // if dealer blackjacks
+  useEffect(() => {
+    if (handTotal(dealer) === 21 && dealer.length === 2) {
+      setDealerTurn(true);
+    }
+  }, [dealer]);
 
   useEffect(() => {
-    // If any hand is blackjack, win immediately
+    // If any hand is blackjack, win immediately for that hand. Progress to next hand if there are more hands.
     if (
-      handTotal(playerHands[currentHandIndex]) === 21 &&
-      playerHands[currentHandIndex].length === 2
+      handTotal(playerHands[currentHandIndex]) == 21 &&
+      playerHands[currentHandIndex].length == 2
     ) {
-      setResults(["win"]);
-      setPhase("finished");
-      setDealerTurn(false);
-    } else if (
-      handTotal(playerHands[currentHandIndex]) > 21 ||
-      (handTotal(dealer) === 21 && dealer.length === 2)
-    ) {
-      setResults(["lose"]);
-      setPhase("finished");
-      setDealerTurn(false);
+      setResults((prevResults) => {
+        const newResults = [...prevResults];
+        newResults[currentHandIndex] = "win";
+        return newResults;
+      });
+      if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
+        setCurrentHandIndex(currentHandIndex + 1);
+      } else {
+        // setPhase("finished");
+        setDealerTurn(true);
+      }
+    } else if (handTotal(playerHands[currentHandIndex]) > 21) {
+      setResults((prevResults) => {
+        const newResults = [...prevResults];
+        newResults[currentHandIndex] = "lose";
+        return newResults;
+      });
+      if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
+        setCurrentHandIndex(currentHandIndex + 1);
+      } else {
+        // setPhase("finished");
+        setDealerTurn(true);
+      }
     }
-  }, [playerHands, dealer]);
+  }, [playerHands, dealer, dealerTurn]);
 
   useEffect(() => {
     if (phase === "finished") {
@@ -256,6 +290,11 @@ export default function BlackjackGame() {
   }, [phase]);
 
   const deal = async () => {
+    if (remaining < 30) {
+      await newShoe();
+      setFeedbackMessages(["New shoe!"]);
+      return;
+    }
     if (!ready || betLocked) return;
     if (mode === "credit") {
       if (betInput > credits) {
@@ -263,6 +302,7 @@ export default function BlackjackGame() {
         return;
       }
     }
+    setDealerTurn(false);
     setFeedbackMessages([]);
     setResults([]);
     setPlayerHands([[]]);
@@ -281,10 +321,24 @@ export default function BlackjackGame() {
     }
     // Draw 4 cards, 2 for the player and 2 for dealer
     const cards = await drawCards(4);
+    setPlayerHands([[]]);
+    setDealer([]);
+
+    // Show first player card
+    setPlayerHands([[cards[0]]]);
+    await new Promise((res) => setTimeout(res, 400));
+
+    // Show first dealer card
+    setDealer([cards[1]]);
+    await new Promise((res) => setTimeout(res, 400));
+
+    // Show second player card
     setPlayerHands([[cards[0], cards[2]]]);
+    await new Promise((res) => setTimeout(res, 400));
+
+    // Show second dealer card
     setDealer([cards[1], cards[3]]);
     setPhase("playing");
-    setDealerTurn(false);
   };
 
   const canSplit = () => {
@@ -334,15 +388,28 @@ export default function BlackjackGame() {
     else setWrongMoves((w) => w + 1);
     // Proceed with split logic
     const [card1, card2] = currentHand;
-    const newHands = [[card1], [card2]];
     const [card3, card4] = await drawCards(2);
-    newHands[0].push(card3);
-    newHands[1].push(card4);
-    setPlayerHands(newHands);
-    setHandBets([handBets[currentHandIndex], handBets[currentHandIndex]]);
+
+    setPlayerHands((prevHands) => {
+      const newHands = [...prevHands];
+      // Remove the hand being split
+      newHands.splice(currentHandIndex, 1, [card1, card3], [card2, card4]);
+      return newHands;
+    });
+    setHandBets((prevBets) => {
+      const newBets = [...prevBets];
+      // Remove the bet for the hand being split, insert two bets
+      newBets.splice(
+        currentHandIndex,
+        1,
+        handBets[currentHandIndex],
+        handBets[currentHandIndex]
+      );
+      return newBets;
+    });
     setCurrentHandIndex(0);
     setHasSplit(true);
-    setResults([]);
+    // setResults([]);
   };
 
   const canDouble = () => {
@@ -350,9 +417,8 @@ export default function BlackjackGame() {
     return (
       phase === "playing" &&
       currentHand.length === 2 &&
-      handTotal(currentHand) >= 9 &&
-      handTotal(currentHand) <= 11
-    );
+      handTotal(currentHand) != 21
+    ); // removed these 2 conditions: handTotal(currentHand) >= 9 && handTotal(currentHand) <= 11
   };
 
   const double = async () => {
@@ -386,8 +452,11 @@ export default function BlackjackGame() {
       currentHand
     )}: Double (${isCorrect ? "correct" : `wrong, you should ${recommended}`})`;
     setFeedbackMessages((prev) => [msg, ...prev]);
-    if (isCorrect) setCorrectMoves((c) => c + 1);
-    else setWrongMoves((w) => w + 1);
+    if (isCorrect) {
+      setCorrectMoves((c) => c + 1);
+    } else {
+      setWrongMoves((w) => w + 1);
+    }
     // Draw one card and finish this hand
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
@@ -425,8 +494,12 @@ export default function BlackjackGame() {
       currentHand
     )}: Hit (${isCorrect ? "correct" : `wrong, you should ${recommended}`})`;
     setFeedbackMessages((prev) => [msg, ...prev]);
-    if (isCorrect) setCorrectMoves((c) => c + 1);
-    else setWrongMoves((w) => w + 1);
+    if (isCorrect) {
+      setCorrectMoves((c) => c + 1);
+    } else {
+      setWrongMoves((w) => w + 1);
+    }
+
     if (handTotal(currentHand) < 22) {
       const [card] = await drawCards(1);
       setPlayerHands((prev) => {
@@ -439,7 +512,7 @@ export default function BlackjackGame() {
       if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
         setCurrentHandIndex(currentHandIndex + 1);
       } else {
-        setPhase("finished");
+        // setPhase("finished");
         setDealerTurn(true);
       }
     }
@@ -463,9 +536,12 @@ export default function BlackjackGame() {
       currentHand
     )}: Stand (${isCorrect ? "correct" : `wrong, you should ${recommended}`})`;
     setFeedbackMessages((prev) => [msg, ...prev]);
-    if (isCorrect) setCorrectMoves((c) => c + 1);
-    else setWrongMoves((w) => w + 1);
-    // If split, move to next hand, else dealer's turn
+    if (isCorrect) {
+      setCorrectMoves((c) => c + 1);
+    } else {
+      setWrongMoves((w) => w + 1);
+    }
+    // If stand, move to next hand, else dealer's turn
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
     } else {
@@ -475,32 +551,36 @@ export default function BlackjackGame() {
 
   // Update credits after win/lose/push
   useEffect(() => {
-    if (!user || results.length === 0) {
-      setBetLocked(false);
-      return;
-    }
-    if (mode !== "credit") {
-      setBetLocked(false);
-      return;
-    }
-    let payout = 0;
-    results.forEach((result, i) => {
-      const b = handBets[i];
-      if (result === "win") payout += b * 2;
-      else if (result === "push") payout += b;
-      // lose: no payout
-    });
-    if (payout > 0) {
-      const userRef = doc(db, "blackjackStats", user.uid);
-      updateDoc(userRef, {
-        credits: credits + payout,
-        correctMoves,
-        wrongMoves,
-        handsPlayed,
+    if (phase === "finished") {
+      if (!user || results.length === 0) {
+        setBetLocked(false);
+        return;
+      }
+      if (mode !== "credit") {
+        setBetLocked(false);
+        return;
+      }
+      let payout = 0;
+      results.forEach((result, i) => {
+        const b = handBets[i];
+        if (result === "win") payout += b * 2;
+        else if (result === "push") payout += b;
+        // lose: no payout
       });
+      if (payout > 0) {
+        const userRef = doc(db, "blackjackStats", user.uid);
+        updateDoc(userRef, {
+          credits: credits + payout,
+          correctMoves,
+          wrongMoves,
+          handsPlayed,
+        });
+      }
+      setBetLocked(false);
+    } else {
+      return;
     }
-    setBetLocked(false);
-  }, [results]);
+  }, [phase]);
 
   return (
     <main className="h-full flex flex-col items-center justify-center gap-6">
@@ -557,15 +637,15 @@ export default function BlackjackGame() {
         Dealer:{" "}
         {phase === "waiting"
           ? 0
-          : phase === "finished"
+          : dealerTurn
           ? handTotal(dealer)
           : handTotal(dealer.slice(0, 1)) || 0}
       </p>
       {/* dealer */}
       <section className="flex gap-2">
         {dealer.map((c, i) => {
-          const hideCard = phase === "playing" && i === 1;
-          return hideCard ? (
+          // const hideCard = phase === "playing" && i === 1;
+          return !dealerTurn && i === 1 ? (
             <CardBack key="hole" />
           ) : (
             <CardFace key={c.code + Math.random()} card={c} />

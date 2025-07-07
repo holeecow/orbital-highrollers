@@ -8,17 +8,28 @@ export function useShoe() {
   const [remaining, setRemaining] = useState(0);
 
   // initialised once when useShoe is called
-  useEffect(() => {
-    createShoe().then(({ deckId, remaining }) => {
-      setDeckId(deckId);
-      setRemaining(remaining);
-    });
+  // useEffect(() => {
+  //   createShoe().then(({ deckId, remaining }) => {
+  //     setDeckId(deckId);
+  //     setRemaining(remaining);
+  //   });
+  // }, []);
+
+  const initializeShoe = useCallback(async () => {
+    const { deckId, remaining } = await createShoe();
+    setDeckId(deckId);
+    setRemaining(remaining);
   }, []);
 
+  useEffect(() => {
+    initializeShoe();
+  }, [initializeShoe]);
+
   // draw N number of cards from the deck
-  // function is recreated only when deckID changes 
+  // function is recreated only when deckID changes
   const drawCards = useCallback(
-    async (count = 1) => { //count = 1 to draw 1 card
+    async (count = 1) => {
+      //count = 1 to draw 1 card
       if (!deckId) throw new Error("Shoe not ready");
       const { cards, remaining } = await draw(deckId, count); //draw 1 card
       setRemaining(remaining); //update state
@@ -28,5 +39,10 @@ export function useShoe() {
   );
 
   //if deckID is not undefined or null, Boolean(deckID) is true
-  return { drawCards, remaining, ready: Boolean(deckId) };
+  return {
+    drawCards,
+    remaining,
+    ready: Boolean(deckId),
+    newShoe: initializeShoe,
+  };
 }
