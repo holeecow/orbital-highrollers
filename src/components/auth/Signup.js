@@ -1,27 +1,50 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
 import { useState } from "react";
+import { useRouter } from "next/router";
 import { auth } from "../../firebase";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null); // State to hold error messages
+  const router = useRouter();
 
   const SignUp = async (e) => {
     e.preventDefault(); // Prevent reloading the page on form submission
+    setError(null); // Reset error before new signup attempt
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed up
-        const user = userCredential.user;
-        console.log("User signed up:", user);
-        // Redirect or perform any other action after successful sign-up
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error("Error signing up:", errorCode, errorMessage);
-        // Handle errors here (e.g., show an alert or message)
-      });
+    try {
+      // Proactively check if the email is already in use
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        setError("This account already exists!");
+        return;
+      }
+
+      // If the email isn't in use, create the user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      // Signed up
+      const user = userCredential.user;
+      console.log("User signed up:", user);
+      // Redirect or perform any other action after successful sign-up
+      router.push("/");
+    } catch (error) {
+      // Fallback and extended error handling
+      if (error.code === "auth/email-already-in-use") {
+        setError("This account already exists!");
+      } else if (error.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
+      } else if (error.code === "auth/weak-password") {
+        setError("Password must be at least 6 characters long.");
+      } else {
+        console.error("Error signing up:", error.code, error.message);
+        setError("Failed to create an account. Please try again.");
+      }
+    }
   };
   return (
     <section className="bg-white dark:bg-gray-900 ">
@@ -37,6 +60,12 @@ export default function Signup() {
               Let&rsquo;s get you all set up so you can begin setting up your
               profile and start tracking your moves.
             </p>
+
+            {error && (
+              <div className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                {error}
+              </div>
+            )}
 
             <form
               className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2"

@@ -12,15 +12,22 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null); // State to hold error messages
   const [resetCard, setResetCard] = useState(false); // State to manage reset password modal visibility
   const [resetEmail, setResetEmail] = useState(""); // State for email input in reset card
   const signIn = async (e) => {
     e.preventDefault();
+    setError(null); // Reset error before new signin attempt
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/"); // navigate to home page when the user really is signed in
     } catch (err) {
-      console.error(err.code, err.message);
+      if (err.code === "auth/invalid-credential") {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError("Failed to sign in. Please try again later.");
+        console.error("Login error:", err.code, err.message);
+      }
     }
   };
   const handlePasswordReset = async () => {
@@ -86,11 +93,20 @@ export default function Login() {
                 </p>
               </div>
 
+              {error && (
+                <div
+                  className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg"
+                  role="alert"
+                >
+                  {error}
+                </div>
+              )}
+
               <div className="mt-8">
                 <form onSubmit={signIn}>
                   <div>
                     <label
-                      for="email"
+                      htmlFor="email"
                       className="block mb-2 text-sm text-gray-600 dark:text-gray-200"
                     >
                       Email Address
@@ -109,7 +125,7 @@ export default function Login() {
                   <div className="mt-6">
                     <div className="flex justify-between mb-2">
                       <label
-                        for="password"
+                        htmlFor="password"
                         className="text-sm text-gray-600 dark:text-gray-200"
                       >
                         Password
@@ -117,7 +133,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setResetCard(true)}
-                        className="text-sm text-gray-400 focus:text-blue-500 hover:text-blue-500 hover:underline"
+                        className="text-sm text-gray-400 focus:text-blue-500 hover:text-blue-500 hover:underline cursor-pointer"
                       >
                         Forgot password?
                       </button>

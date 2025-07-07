@@ -29,7 +29,7 @@ export default function Header() {
           className="h-20 w-18 object-contain"
         />
         <span className="font-semibold text-xl tracking-tight">
-          High Rollers
+          BJ Basics
         </span>
       </div>
       <div className="block lg:hidden">
