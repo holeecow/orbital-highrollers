@@ -131,7 +131,7 @@ export default function BlackjackGame() {
   // State for controlling the cards the dealer has
   const [dealer, setDealer] = useState([]);
 
-  // State for the phase of the game: waiting | playing | finished
+  // State for the phase of the game: waiting | playing | dealer | finished
   const [phase, setPhase] = useState("waiting");
 
   // State for the results of each hand: win | lose | push
@@ -207,14 +207,19 @@ export default function BlackjackGame() {
     const runDealer = async () => {
       if (!dealerTurn) return;
       if (
-        playerHands.length === 1 &&
-        handTotal(playerHands[0]) === 21 &&
-        playerHands[0].length === 2
+        playerHands.length == 1 &&
+        handTotal(playerHands[0]) == 21 &&
+        playerHands[0].length == 2
       ) {
         setResults(["win"]);
         setPhase("finished");
         return;
+      } else if (playerHands.length == 1 && handTotal(playerHands[0]) > 21) {
+        setPhase("finished");
+        setResults(["lose"]);
+        return;
       }
+
       let current = [...dealer];
       while (handTotal(current) < 17) {
         const [card] = await drawCards(1);
@@ -244,10 +249,17 @@ export default function BlackjackGame() {
     }
   }, [dealerTurn]); // was [dealerTurn, dealer, playerHands, drawCards]
 
+  // Debug
+  // useEffect(() => {
+  //   console.log("Phase is now:", phase);
+  // }, [phase]);
+
   // if dealer blackjacks
   useEffect(() => {
-    if (handTotal(dealer) === 21 && dealer.length === 2) {
-      setDealerTurn(true);
+    if (handTotal(dealer) == 21 && dealer.length == 2) {
+      setResults(["win"]);
+      setPhase("finished");
+      return;
     }
   }, [dealer]);
 
@@ -265,7 +277,7 @@ export default function BlackjackGame() {
       if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
         setCurrentHandIndex(currentHandIndex + 1);
       } else {
-        // setPhase("finished");
+        setPhase("dealer");
         setDealerTurn(true);
       }
     } else if (handTotal(playerHands[currentHandIndex]) > 21) {
@@ -277,14 +289,14 @@ export default function BlackjackGame() {
       if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
         setCurrentHandIndex(currentHandIndex + 1);
       } else {
-        // setPhase("finished");
+        setPhase("dealer");
         setDealerTurn(true);
       }
     }
-  }, [playerHands, dealer, dealerTurn]);
+  }, [playerHands, dealer]);
 
   useEffect(() => {
-    if (phase === "finished") {
+    if (phase == "finished") {
       setHandsPlayed((h) => h + 1);
     }
   }, [phase]);
@@ -512,7 +524,7 @@ export default function BlackjackGame() {
       if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
         setCurrentHandIndex(currentHandIndex + 1);
       } else {
-        // setPhase("finished");
+        setPhase("dealer");
         setDealerTurn(true);
       }
     }
@@ -545,13 +557,14 @@ export default function BlackjackGame() {
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
     } else {
+      setPhase("dealer");
       setDealerTurn(true);
     }
   };
 
   // Update credits after win/lose/push
   useEffect(() => {
-    if (phase === "finished") {
+    if (phase == "finished") {
       if (!user || results.length === 0) {
         setBetLocked(false);
         return;
@@ -679,7 +692,7 @@ export default function BlackjackGame() {
         ))}
       </div>
 
-      {phase === "finished" && (
+      {phase == "finished" && (
         <div className="flex flex-col items-center gap-2">
           {results.map((result, index) => (
             <p key={index} className="text-xl font-bold text-black">
@@ -692,12 +705,12 @@ export default function BlackjackGame() {
       )}
       {/* controls */}
       <div
-        className={phase === "playing" ? "flex gap-4" : "flex justify-center"}
+        className={phase == "playing" ? "flex gap-4" : "flex justify-center"}
       >
         <button className="btn" onClick={deal} disabled={statsLoading}>
           {statsLoading ? "Loading..." : "Deal"}
         </button>
-        {phase === "playing" && (
+        {phase == "playing" && (
           <>
             <button className="btn" onClick={hit}>
               Hit
