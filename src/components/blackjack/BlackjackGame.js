@@ -210,7 +210,7 @@ export default function BlackjackGame() {
   // useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
     const runDealer = async () => {
-      if (!dealerTurn) return;
+      if (!dealerTurn || phase == "finished") return;
 
       let current = [...dealer];
       while (handTotal(current) < 17) {
@@ -244,20 +244,23 @@ export default function BlackjackGame() {
   useEffect(() => {
     if (handTotal(dealer) == 21 && dealer.length == 2) {
       // if dealer blackjacks
-      if (handTotal(playerHands[0]) == 21 && playerHands.length == 1) {
-        setResults(["push"]);
-        setPhase("finished");
-        return;
-      } else {
-        setResults(["lose"]);
-        setPhase("finished");
-        return;
-      }
+      setDealerTurn(true);
+      return;
+      // if (handTotal(playerHands[0]) == 21 && playerHands.length == 1) {
+      //   // setResults(["push"]);
+      //   // setPhase("finished");
+      //   return;
+      // } else {
+      //   setResults(["lose"]);
+      //   setPhase("finished");
+      //   return;
+      // }
     } else {
       if (playerHands.length == 1) {
         if (handTotal(playerHands[0]) == 21 && playerHands[0].length == 2) {
           setResults(["win"]);
           setPhase("finished");
+          setDealerTurn(true);
           return;
         }
         if (handTotal(playerHands[0]) > 21) {
@@ -474,6 +477,7 @@ export default function BlackjackGame() {
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
     } else {
+      setPhase("dealer");
       setDealerTurn(true);
     }
   };
@@ -500,23 +504,28 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
-
-    if (handTotal(currentHand) < 22) {
-      const [card] = await drawCards(1);
-      setPlayerHands((prev) => {
-        const newHands = [...prev];
-        newHands[currentHandIndex] = [...newHands[currentHandIndex], card];
-        return newHands;
-      });
-    } else {
-      // If bust, auto-stand or move to next hand if split
-      if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
-        setCurrentHandIndex(currentHandIndex + 1);
-      } else {
-        setPhase("dealer");
-        setDealerTurn(true);
-      }
-    }
+    const [card] = await drawCards(1);
+    setPlayerHands((prev) => {
+      const newHands = [...prev];
+      newHands[currentHandIndex] = [...newHands[currentHandIndex], card];
+      return newHands;
+    });
+    // if (handTotal(currentHand) < 22) {
+    //   const [card] = await drawCards(1);
+    //   setPlayerHands((prev) => {
+    //     const newHands = [...prev];
+    //     newHands[currentHandIndex] = [...newHands[currentHandIndex], card];
+    //     return newHands;
+    //   });
+    // } else {
+    //   // If bust, auto-stand or move to next hand if split
+    //   if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
+    //     setCurrentHandIndex(currentHandIndex + 1);
+    //   } else {
+    //     setPhase("dealer");
+    //     setDealerTurn(true);
+    //   }
+    // }
   };
 
   const stand = () => {
