@@ -202,23 +202,15 @@ export default function BlackjackGame() {
     return () => unsubscribe();
   }, [user, authLoading]);
 
+  // Scenarios
+  // 1. Dealer blackjack
+  // 2. Player's first hand blackjacks
+  // 3. Player's hand after split blackjacks
+
   // useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
     const runDealer = async () => {
       if (!dealerTurn) return;
-      if (
-        playerHands.length == 1 &&
-        handTotal(playerHands[0]) == 21 &&
-        playerHands[0].length == 2
-      ) {
-        setResults(["win"]);
-        setPhase("finished");
-        return;
-      } else if (playerHands.length == 1 && handTotal(playerHands[0]) > 21) {
-        setPhase("finished");
-        setResults(["lose"]);
-        return;
-      }
 
       let current = [...dealer];
       while (handTotal(current) < 17) {
@@ -249,51 +241,46 @@ export default function BlackjackGame() {
     }
   }, [dealerTurn]); // was [dealerTurn, dealer, playerHands, drawCards]
 
-  // Debug
-  // useEffect(() => {
-  //   console.log("Phase is now:", phase);
-  // }, [phase]);
-
-  // if dealer blackjacks
   useEffect(() => {
     if (handTotal(dealer) == 21 && dealer.length == 2) {
-      setResults(["win"]);
-      setPhase("finished");
-      return;
-    }
-  }, [dealer]);
-
-  useEffect(() => {
-    // If any hand is blackjack, win immediately for that hand. Progress to next hand if there are more hands.
-    if (
-      handTotal(playerHands[currentHandIndex]) == 21 &&
-      playerHands[currentHandIndex].length == 2
-    ) {
-      setResults((prevResults) => {
-        const newResults = [...prevResults];
-        newResults[currentHandIndex] = "win";
-        return newResults;
-      });
-      if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
-        setCurrentHandIndex(currentHandIndex + 1);
+      // if dealer blackjacks
+      if (handTotal(playerHands[0]) == 21 && playerHands.length == 1) {
+        setResults(["push"]);
+        setPhase("finished");
+        return;
       } else {
-        setPhase("dealer");
-        setDealerTurn(true);
+        setResults(["lose"]);
+        setPhase("finished");
+        return;
       }
-    } else if (handTotal(playerHands[currentHandIndex]) > 21) {
-      setResults((prevResults) => {
-        const newResults = [...prevResults];
-        newResults[currentHandIndex] = "lose";
-        return newResults;
-      });
-      if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
-        setCurrentHandIndex(currentHandIndex + 1);
+    } else {
+      if (playerHands.length == 1) {
+        if (handTotal(playerHands[0]) == 21 && playerHands[0].length == 2) {
+          setResults(["win"]);
+          setPhase("finished");
+          return;
+        }
+        if (handTotal(playerHands[0]) > 21) {
+          setResults(["lose"]);
+          setPhase("finished");
+          return;
+        }
       } else {
-        setPhase("dealer");
-        setDealerTurn(true);
+        if (
+          (handTotal(playerHands[currentHandIndex]) == 21 &&
+            playerHands[currentHandIndex].length == 2) ||
+          handTotal(playerHands[currentHandIndex]) > 21
+        ) {
+          if (currentHandIndex < playerHands.length - 1) {
+            setCurrentHandIndex(currentHandIndex + 1);
+          } else {
+            setPhase("dealer");
+            setDealerTurn(true);
+          }
+        }
       }
     }
-  }, [playerHands, dealer]);
+  }, [dealer, playerHands]);
 
   useEffect(() => {
     if (phase == "finished") {
@@ -314,17 +301,19 @@ export default function BlackjackGame() {
         return;
       }
     }
-    setDealerTurn(false);
-    setFeedbackMessages([]);
-    setResults([]);
     setPlayerHands([[]]);
-    setHandBets([betInput]);
     setCurrentHandIndex(0);
+    setHandBets([betInput]);
     setHasSplit(false);
     setDealer([]);
     setPhase("waiting");
-    setPrevBet(betInput);
+    setResults([]);
+
+    setDealerTurn(false);
+    setFeedbackMessages([]);
+
     setBet(betInput);
+    setPrevBet(betInput);
     setBetLocked(true);
     // Deduct bet from credits (credit mode only)
     if (mode === "credit" && user) {
@@ -576,8 +565,13 @@ export default function BlackjackGame() {
       let payout = 0;
       results.forEach((result, i) => {
         const b = handBets[i];
-        if (result === "win") payout += b * 2;
-        else if (result === "push") payout += b;
+        if (result === "win") {
+          if (handTotal(playerHands[i]) == 21 && playerHands[i].length == 2) {
+            payout += b * 2 + b;
+          } else {
+            payout += b * 2;
+          }
+        } else if (result === "push") payout += b;
         // lose: no payout
       });
       if (payout > 0) {
