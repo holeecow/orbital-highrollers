@@ -647,7 +647,7 @@ export default function BlackjackGame() {
         Dealer:{" "}
         {phase === "waiting"
           ? 0
-          : dealerTurn
+          : dealerTurn || phase == "finished"
           ? handTotal(dealer)
           : handTotal(dealer.slice(0, 1)) || 0}
       </p>
