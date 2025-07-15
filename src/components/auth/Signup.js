@@ -33,10 +33,10 @@ export default function Signup() {
         email,
         password
       );
-        // Signed up
-        const user = userCredential.user;
-        console.log("User signed up:", user);
-        // Redirect or perform any other action after successful sign-up
+      // Signed up
+      const user = userCredential.user;
+      console.log("User signed up:", user);
+      // Redirect or perform any other action after successful sign-up
       router.push("/");
     } catch (error) {
       // Fallback and extended error handling
