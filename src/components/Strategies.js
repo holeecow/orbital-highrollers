@@ -3,6 +3,55 @@ import React from "react";
 export default function BlackjackStrategies() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 text-justify">
+      {/* Introductory Section: How Blackjack Works */}
+      <h1 className="text-3xl font-bold mb-4 text-center">
+        How Blackjack Works
+      </h1>
+      <p className="mb-4">
+        <b>Blackjack</b> is a classic card game where your goal is to beat the
+        dealer by having a hand value as close to <b>21</b> as possible, without
+        going over. Each card has a value: number cards are worth their number,
+        face cards (Jack, Queen, King) are worth 10, and Aces can be worth 1 or
+        11.
+      </p>
+      <ul className="mb-6 list-disc pl-6">
+        <li>
+          <b>Hit</b>: Take another card to try to get closer to 21.
+        </li>
+        <li>
+          <b>Stand</b>: Keep your current hand and end your turn.
+        </li>
+        <li>
+          <b>Double</b>: Double your bet, take one more card, and end your turn.
+        </li>
+        <li>
+          <b>Split</b>: If you have two cards of the same value, split them into
+          two separate hands (with an additional bet).
+        </li>
+      </ul>
+      <p className="mb-8">
+        The dealer also plays by set rules, usually hitting until they reach 17
+        or higher. If your hand is closer to 21 than the dealer&apos;s (without
+        going over), you win! If you go over 21, you &apos;bust&apos; and lose
+        the round.
+      </p>
+
+      {/* YouTube Video Embed */}
+      <div className="mb-8 w-full flex justify-center">
+        <div className="w-full max-w-2xl aspect-video">
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/UXmbwvr3aKk?start=0&end=282"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+
       <h1 className="text-3xl font-bold mb-6 text-center">
         Basic Blackjack Strategies
       </h1>

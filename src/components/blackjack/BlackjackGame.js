@@ -4,6 +4,7 @@ import { useShoe } from "../hooks/Hook";
 import { useAuth } from "../../contexts/AuthContext";
 import { db } from "../../firebase";
 import { doc, getDoc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import Link from "next/link";
 
 const { GetRecommendedPlayerAction } = require("blackjack-strategy");
 
@@ -28,7 +29,7 @@ function CardBack() {
 
 function ActionFeedback({ messages }) {
   return (
-    <div className="fixed top-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded max-w-xs text-sm">
+    <div className="fixed top-20 left-4 bg-black bg-opacity-70 text-white p-3 rounded max-w-xs text-sm">
       {messages.map((msg, index) => {
         const isWrong = msg.includes("wrong");
         return (
@@ -154,6 +155,19 @@ export default function BlackjackGame() {
   const [betInput, setBetInput] = useState(10);
   const [betLocked, setBetLocked] = useState(false);
   const [mode, setMode] = useState(user ? "credit" : "practice");
+
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    // Only show tutorial if not seen in this session
+    const seen = sessionStorage.getItem("blackjack_tutorial_seen");
+    if (!seen) setShowTutorial(true);
+  }, []);
+
+  const handleCloseTutorial = () => {
+    setShowTutorial(false);
+    sessionStorage.setItem("blackjack_tutorial_seen", "true");
+  };
 
   // Effect to load stats for a logged-in user
   useEffect(() => {
@@ -599,7 +613,15 @@ export default function BlackjackGame() {
   }, [phase]);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6">
+    <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6 relative">
+      {/* Show Tutorial Button */}
+      <button
+        className="absolute top-4 right-4 bg-gray-200 text-black w-10 h-10 flex items-center justify-center rounded-full text-sm shadow hover:bg-gray-300 z-50"
+        onClick={() => setShowTutorial(true)}
+        type="button"
+      >
+        ?
+      </button>
       <div className="flex items-center justify-center bg-gray-200 rounded-full p-1 border-2 border-gray-300 w-full max-w-xs">
         <button
           className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out ${
@@ -644,6 +666,40 @@ export default function BlackjackGame() {
           </button>
         </div>
       )}
+      {showTutorial && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-50 pointer-events-none backdrop-blur-sm">
+          <div className="bg-white rounded-lg p-8 max-w-lg w-full shadow-2xl text-black pointer-events-auto flex flex-col items-center">
+            <h2 className="text-2xl font-bold mb-4">How to Play Blackjack</h2>
+            <ul className="mb-6 list-disc pl-6 space-y-2 text-left">
+              <li>
+                <b>Hit</b>: Take another card to try to get closer to 21.
+              </li>
+              <li>
+                <b>Stand</b>: Keep your current hand and end your turn.
+              </li>
+              <li>
+                <b>Double</b>: Double your bet, take one more card, and end your
+                turn.
+              </li>
+              <li>
+                <b>Split</b>: If you have two cards of the same value, split
+                them into two hands.
+              </li>
+            </ul>
+            <button
+              className="btn  text-white px-6 py-2 rounded mb-3"
+              onClick={handleCloseTutorial}
+            >
+              Got it!
+            </button>
+            <Link href="/strategies" legacyBehavior>
+              <a className="underline text-blue-600 hover:text-blue-800 mt-2 cursor-pointer text-base text-center block">
+                Read More
+              </a>
+            </Link>
+          </div>
+        </div>
+      )}
       <ActionFeedback messages={feedbackMessages} />
       <StatsTracker
         correct={correctMoves}
@@ -663,8 +719,8 @@ export default function BlackjackGame() {
       {/* dealer */}
       <section className="flex gap-2">
         {dealer.map((c, i) => {
-          // const hideCard = phase === "playing" && i === 1;
-          return !dealerTurn && i === 1 ? (
+          const hideCard = phase === "playing" && i === 1;
+          return hideCard ? ( // was !dealerTurn && i === 1
             <CardBack key="hole" />
           ) : (
             <CardFace key={c.code + Math.random()} card={c} />
@@ -737,7 +793,8 @@ export default function BlackjackGame() {
           </>
         )}
       </div>
-      <p className="text-black">{phase}</p>
+      {/* For debugging*/}
+      {/* <p className="text-black">{phase}</p> */}
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
     </div>
   );
