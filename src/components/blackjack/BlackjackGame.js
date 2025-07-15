@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { db } from "../../firebase";
 import { doc, getDoc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import Link from "next/link";
+import { StackedChips, getChipGroups } from "./Chips";
 
 const { GetRecommendedPlayerAction } = require("blackjack-strategy");
 
@@ -126,7 +127,7 @@ export default function BlackjackGame() {
   // State for controlling the player's hands (start with one hand)
   const [playerHands, setPlayerHands] = useState([[]]); // Array of hands
   const [currentHandIndex, setCurrentHandIndex] = useState(0); // Which hand is being played
-  const [handBets, setHandBets] = useState([10]); // Array of bets for each hand
+  const [handBets, setHandBets] = useState([0]); // Array of bets for each hand
   const [hasSplit, setHasSplit] = useState(false); // Track if split has occurred
 
   // State for controlling the cards the dealer has
@@ -146,17 +147,22 @@ export default function BlackjackGame() {
   const [correctMoves, setCorrectMoves] = useState(0);
   const [wrongMoves, setWrongMoves] = useState(0);
   const [handsPlayed, setHandsPlayed] = useState(0);
+  const [chipAnimations, setChipAnimations] = useState([]); // e.g., ["idle", "toPlayer", "toDealer"]
+  const [chipsMerged, setChipsMerged] = useState([]); // Track if payout chips have been merged
 
   const { user, loading: authLoading } = useAuth(); // Get user and loading state
   const [statsLoading, setStatsLoading] = useState(true);
   const [credits, setCredits] = useState(0);
-  const [bet, setBet] = useState(10);
-  const [prevBet, setPrevBet] = useState(10);
-  const [betInput, setBetInput] = useState(10);
+  const [bet, setBet] = useState(0);
+  const [prevBet, setPrevBet] = useState(0);
+  const [betInput, setBetInput] = useState(0);
   const [betLocked, setBetLocked] = useState(false);
   const [mode, setMode] = useState(user ? "credit" : "practice");
 
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const [prevCredits, setPrevCredits] = useState(credits);
+  const [creditChange, setCreditChange] = useState(null);
 
   useEffect(() => {
     // Only show tutorial if not seen in this session
@@ -260,26 +266,19 @@ export default function BlackjackGame() {
       // if dealer blackjacks
       setDealerTurn(true);
       return;
-      // if (handTotal(playerHands[0]) == 21 && playerHands.length == 1) {
-      //   // setResults(["push"]);
-      //   // setPhase("finished");
-      //   return;
-      // } else {
-      //   setResults(["lose"]);
-      //   setPhase("finished");
-      //   return;
-      // }
     } else {
       if (playerHands.length == 1) {
         if (handTotal(playerHands[0]) == 21 && playerHands[0].length == 2) {
           setResults(["win"]);
           setPhase("finished");
           setDealerTurn(true);
+
           return;
         }
         if (handTotal(playerHands[0]) > 21) {
           setResults(["lose"]);
           setPhase("finished");
+
           return;
         }
       } else {
@@ -297,7 +296,23 @@ export default function BlackjackGame() {
         }
       }
     }
-  }, [dealer, playerHands]);
+  }, [dealer, playerHands, currentHandIndex, dealerTurn]);
+
+  useEffect(() => {
+    if (phase == "finished") {
+      setChipAnimations(
+        results.map((result) =>
+          result === "win"
+            ? "toPlayer"
+            : result === "lose"
+            ? "toDealer"
+            : "idle"
+        )
+      );
+    } else {
+      setChipAnimations([]); // Reset on new round
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (phase == "finished") {
@@ -327,6 +342,7 @@ export default function BlackjackGame() {
     setResults([]);
 
     setDealerTurn(false);
+
     setFeedbackMessages([]);
 
     setBet(betInput);
@@ -488,6 +504,7 @@ export default function BlackjackGame() {
       return newBets;
     });
     // Move to next hand or dealer
+
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
     } else {
@@ -612,6 +629,17 @@ export default function BlackjackGame() {
     }
   }, [phase]);
 
+  useEffect(() => {
+    if (credits !== prevCredits) {
+      const diff = credits - prevCredits;
+      if (diff !== 0) {
+        setCreditChange(diff > 0 ? `+${diff}` : `${diff}`);
+        setTimeout(() => setCreditChange(null), 1200); // Show for 1.2s
+      }
+      setPrevCredits(credits);
+    }
+  }, [credits, prevCredits]);
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6 relative">
       {/* Show Tutorial Button */}
@@ -648,6 +676,18 @@ export default function BlackjackGame() {
       {mode === "credit" && (
         <div className="flex items-center gap-4 mb-2">
           <span className="font-semibold text-black">Credits: {credits}</span>
+          <span
+            className={`block text-lg font-bold transition-opacity duration-200 w-14 text-center ${
+              creditChange
+                ? creditChange.startsWith("+")
+                  ? "text-green-500 opacity-100 animate-fade-move-up"
+                  : "text-red-500 opacity-100 animate-fade-move-up"
+                : "opacity-0"
+            }`}
+            style={{ minHeight: "1.5rem" }}
+          >
+            {creditChange || "0"}
+          </span>
           <input
             type="number"
             min={1}
@@ -717,7 +757,7 @@ export default function BlackjackGame() {
           : handTotal(dealer.slice(0, 1)) || 0}
       </p>
       {/* dealer */}
-      <section className="flex gap-2">
+      <section className="flex gap-2 relative">
         {dealer.map((c, i) => {
           const hideCard = phase === "playing" && i === 1;
           return hideCard ? ( // was !dealerTurn && i === 1
@@ -726,6 +766,27 @@ export default function BlackjackGame() {
             <CardFace key={c.code + Math.random()} card={c} />
           );
         })}
+        {/* Dealer payout chips animation (only on win, only during animation) */}
+        {mode == "credit" &&
+          phase === "finished" &&
+          results.map((result, index) =>
+            result === "win" && !chipsMerged[index] ? (
+              <div
+                key={index}
+                className="absolute -top-16 left-1/2 -translate-x-1/2 animate-chip-from-dealer flex gap-2"
+                style={{ pointerEvents: "none" }}
+              >
+                {getChipGroups(handBets[index] || 0).map((chip, idx) => (
+                  <StackedChips
+                    key={idx}
+                    value={chip.value}
+                    color={chip.color}
+                    count={chip.count}
+                  />
+                ))}
+              </div>
+            ) : null
+          )}
       </section>
       {/* player hands */}
       <div className="flex flex-col gap-4">
@@ -743,9 +804,31 @@ export default function BlackjackGame() {
                 <CardFace key={c.code + Math.random()} card={c} />
               ))}
             </section>
+            {/* Stacked chips for this hand's bet */}
+            {mode == "credit" && (
+              <div className="flex gap-2 mt-2">
+                {getChipGroups(handBets[index] || 0).map((chip, idx) => {
+                  let animationClass = "";
+                  if (chipAnimations[index] === "toPlayer") {
+                    animationClass = "animate-chip-to-player";
+                  } else if (chipAnimations[index] === "toDealer") {
+                    animationClass = "animate-chip-to-dealer";
+                  }
+                  return (
+                    <div key={idx} className={animationClass}>
+                      <StackedChips
+                        value={chip.value}
+                        color={chip.color}
+                        count={chip.count}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <p className=" text-black">
               {mode === "credit"
-                ? `Hand ${index + 1}: ${handTotal(hand) || 0} (Bet: ${
+                ? `Hand ${index + 1}: ${handTotal(hand) || 0} (Bet: $${
                     handBets[index]
                   })`
                 : `Hand ${index + 1}: ${handTotal(hand) || 0}`}
