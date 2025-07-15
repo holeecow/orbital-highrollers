@@ -39,7 +39,7 @@ export function StackedChips({ value, color, count }) {
             borderColor: "#000",
             bottom: `${i * 8}px`,
             zIndex: i,
-            color: "#000",
+            color: color === "black" ? "#fff" : "#000",
           }}
         >
           ${value}

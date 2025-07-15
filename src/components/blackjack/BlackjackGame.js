@@ -148,6 +148,7 @@ export default function BlackjackGame() {
   const [wrongMoves, setWrongMoves] = useState(0);
   const [handsPlayed, setHandsPlayed] = useState(0);
   const [chipAnimations, setChipAnimations] = useState([]); // e.g., ["idle", "toPlayer", "toDealer"]
+  const [animationShown, setAnimationShown] = useState(false);
   const [chipsMerged, setChipsMerged] = useState([]); // Track if payout chips have been merged
 
   const { user, loading: authLoading } = useAuth(); // Get user and loading state
@@ -155,7 +156,7 @@ export default function BlackjackGame() {
   const [credits, setCredits] = useState(0);
   const [bet, setBet] = useState(0);
   const [prevBet, setPrevBet] = useState(0);
-  const [betInput, setBetInput] = useState(0);
+  const [betInput, setBetInput] = useState(1);
   const [betLocked, setBetLocked] = useState(false);
   const [mode, setMode] = useState(user ? "credit" : "practice");
 
@@ -299,7 +300,7 @@ export default function BlackjackGame() {
   }, [dealer, playerHands, currentHandIndex, dealerTurn]);
 
   useEffect(() => {
-    if (phase == "finished") {
+    if (phase == "finished" && !animationShown) {
       setChipAnimations(
         results.map((result) =>
           result === "win"
@@ -309,16 +310,24 @@ export default function BlackjackGame() {
             : "idle"
         )
       );
-    } else {
+      setAnimationShown(true);
+    } else if (phase !== "finished") {
       setChipAnimations([]); // Reset on new round
     }
-  }, [phase]);
+  }, [phase, results, animationShown]);
 
   useEffect(() => {
     if (phase == "finished") {
       setHandsPlayed((h) => h + 1);
     }
   }, [phase]);
+
+  useEffect(() => {
+    // When mode changes after a game, clear animations to prevent re-playing
+    if (phase === "finished") {
+      setChipAnimations([]);
+    }
+  }, [mode]);
 
   const deal = async () => {
     if (remaining < 30) {
@@ -327,7 +336,12 @@ export default function BlackjackGame() {
       return;
     }
     if (!ready || betLocked) return;
+    setAnimationShown(false);
     if (mode === "credit") {
+      if (betInput < 1) {
+        setFeedbackMessages(["Minimum bet is 1 credit."]);
+        return;
+      }
       if (betInput > credits) {
         setFeedbackMessages(["Not enough credits for this bet."]);
         return;
@@ -644,7 +658,7 @@ export default function BlackjackGame() {
     <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6 relative">
       {/* Show Tutorial Button */}
       <button
-        className="absolute top-4 right-4 bg-gray-200 text-black w-10 h-10 flex items-center justify-center rounded-full text-sm shadow hover:bg-gray-300 z-50"
+        className="absolute top-4 right-4 bg-gray-200 text-black w-10 h-10 flex items-center justify-center rounded-full text-sm shadow hover:bg-gray-300 z-50 cursor-pointer"
         onClick={() => setShowTutorial(true)}
         type="button"
       >
@@ -652,23 +666,24 @@ export default function BlackjackGame() {
       </button>
       <div className="flex items-center justify-center bg-gray-200 rounded-full p-1 border-2 border-gray-300 w-full max-w-xs">
         <button
-          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out ${
+          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out cursor-pointer ${
             mode === "practice"
               ? "bg-white text-blue-600 shadow-sm"
               : "bg-transparent text-gray-500"
-          }`}
+          } disabled:text-gray-400 disabled:cursor-not-allowed`}
           onClick={() => setMode("practice")}
+          disabled={phase === "playing" || phase === "dealer"}
         >
           Practice
         </button>
         <button
-          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out ${
+          className={`w-1/2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ease-in-out cursor-pointer ${
             mode === "credit"
               ? "bg-white text-green-600 shadow-sm"
               : "bg-transparent text-gray-500"
           } disabled:text-gray-400 disabled:cursor-not-allowed`}
           onClick={() => setMode("credit")}
-          disabled={!user}
+          disabled={!user || phase === "playing" || phase === "dealer"}
         >
           Credit
         </button>
