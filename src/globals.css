@@ -1,2 +1,47 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@keyframes chip-to-player {
+  to {
+    transform: translateY(200px); /* Adjust as needed */
+    opacity: 0;
+  }
+}
+@keyframes chip-to-dealer {
+  to {
+    transform: translateY(-200px); /* Adjust as needed */
+    opacity: 0;
+  }
+}
+.animate-chip-to-player {
+  animation: chip-to-player 1.5s forwards;
+  animation-delay: 0.5s;
+}
+.animate-chip-to-dealer {
+  animation: chip-to-dealer 1.5s forwards;
+  animation-delay: 0.5s;
+}
+
+@keyframes chip-from-dealer {
+  to {
+    transform: translateY(120px) scale(0.8); /* Adjust as needed for your layout */
+    opacity: 0;
+  }
+}
+.animate-chip-from-dealer {
+  animation: chip-from-dealer 1.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+@keyframes fade-move-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+.animate-fade-move-up {
+  animation: fade-move-up 1.2s ease;
+}
