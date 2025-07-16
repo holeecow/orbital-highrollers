@@ -5,6 +5,10 @@ Learn basic-strategy blackjack the fun, analytical way.
 
 ---
 
+WORK IN PROGRESS
+
+DEPLOYED ON https://orbital-highrollers.vercel.app/
+
 ## Table of Contents
 
 1. [Why High Rollers?](#why-highrollers)
