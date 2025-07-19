@@ -153,6 +153,18 @@ export default function BlackjackGame() {
   const [longestWinStreak, setLongestWinStreak] = useState(0);
   const [longestLossStreak, setLongestLossStreak] = useState(0);
 
+  const [dailyStats, setDailyStats] = useState({});
+  const [lastPlayerAction, setLastPlayerAction] = useState(null);
+  const [moveStats, setMoveStats] = useState({
+    hit: { wins: 0, total: 0 },
+    stand: { wins: 0, total: 0 },
+    double: { wins: 0, total: 0 },
+    split: { wins: 0, total: 0 },
+  });
+
+  const [winStreaks, setWinStreaks] = useState([]);
+  const [lossStreaks, setLossStreaks] = useState([]);
+
   const [chipAnimations, setChipAnimations] = useState([]); // e.g., ["idle", "toPlayer", "toDealer"]
   const [animationShown, setAnimationShown] = useState(false);
   const [chipsMerged, setChipsMerged] = useState([]); // Track if payout chips have been merged
@@ -212,6 +224,15 @@ export default function BlackjackGame() {
           setCredits(data.credits || 0);
           setLongestWinStreak(data.longestWinStreak || 0);
           setLongestLossStreak(data.longestLossStreak || 0);
+          setDailyStats(data.dailyStats || {});
+          setMoveStats(data.moveStats || {
+            hit: { wins: 0, total: 0 },
+            stand: { wins: 0, total: 0 },
+            double: { wins: 0, total: 0 },
+            split: { wins: 0, total: 0 },
+          });
+          setWinStreaks(data.winStreaks || []);
+          setLossStreaks(data.lossStreaks || []);
           // Current streaks are not persisted, so they reset on load
           setCurrentWinStreak(data.currentWinStreak || 0);
           setCurrentLossStreak(data.currentLossStreak || 0);
@@ -223,6 +244,15 @@ export default function BlackjackGame() {
           setCredits(0);
           setLongestWinStreak(0);
           setLongestLossStreak(0);
+          setDailyStats({});
+          setMoveStats({
+            hit: { wins: 0, total: 0 },
+            stand: { wins: 0, total: 0 },
+            double: { wins: 0, total: 0 },
+            split: { wins: 0, total: 0 },
+          });
+          setWinStreaks([]);
+          setLossStreaks([]);
           setCurrentWinStreak(0);
           setCurrentLossStreak(0);
         }
@@ -369,6 +399,7 @@ export default function BlackjackGame() {
     setDealer([]);
     setPhase("waiting");
     setResults([]);
+    setLastPlayerAction(null);
 
     setDealerTurn(false);
 
@@ -449,6 +480,7 @@ export default function BlackjackGame() {
     setFeedbackMessages((prev) => [msg, ...prev]);
     if (isCorrect) setCorrectMoves((c) => c + 1);
     else setWrongMoves((w) => w + 1);
+    setLastPlayerAction('split');
     // Proceed with split logic
     const [card1, card2] = currentHand;
     const [card3, card4] = await drawCards(2);
@@ -520,6 +552,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
+    setLastPlayerAction('double');
     // Draw one card and finish this hand
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
@@ -564,6 +597,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
+    setLastPlayerAction('hit');
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
       const newHands = [...prev];
@@ -611,6 +645,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
+    setLastPlayerAction('stand');
     // If stand, move to next hand, else dealer's turn
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
@@ -652,32 +687,62 @@ export default function BlackjackGame() {
         // lose: no payout
       });
 
+      const newMoveStats = { ...moveStats };
+      if (lastPlayerAction) {
+        newMoveStats[lastPlayerAction].total++;
+        if (roundWon && !roundLost) {
+            newMoveStats[lastPlayerAction].wins++;
+        }
+      }
+
       let newCurrentWinStreak = currentWinStreak;
       let newCurrentLossStreak = currentLossStreak;
       let newLongestWinStreak = longestWinStreak;
       let newLongestLossStreak = longestLossStreak;
+      let newWinStreaks = [...winStreaks];
+      let newLossStreaks = [...lossStreaks];
 
       if (roundWon && !roundLost) { // Pure win
         newCurrentWinStreak++;
+        if (newCurrentLossStreak > 0) newLossStreaks.push(newCurrentLossStreak);
         newCurrentLossStreak = 0;
         if (newCurrentWinStreak > newLongestWinStreak) {
           newLongestWinStreak = newCurrentWinStreak;
         }
       } else if (roundLost && !roundWon) { // Pure loss
         newCurrentLossStreak++;
+        if (newCurrentWinStreak > 0) newWinStreaks.push(newCurrentWinStreak);
         newCurrentWinStreak = 0;
         if (newCurrentLossStreak > newLongestLossStreak) {
           newLongestLossStreak = newCurrentLossStreak;
         }
       } else { // Push or mixed results (e.g., win one hand, lose another)
+        if (newCurrentWinStreak > 0) newWinStreaks.push(newCurrentWinStreak);
+        if (newCurrentLossStreak > 0) newLossStreaks.push(newCurrentLossStreak);
         newCurrentWinStreak = 0;
         newCurrentLossStreak = 0;
       }
 
+      setWinStreaks(newWinStreaks);
+      setLossStreaks(newLossStreaks);
       setCurrentWinStreak(newCurrentWinStreak);
       setCurrentLossStreak(newCurrentLossStreak);
       setLongestWinStreak(newLongestWinStreak);
       setLongestLossStreak(newLongestLossStreak);
+
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const roundBet = handBets.reduce((acc, b) => acc + b, 0);
+      const netProfit = payout - roundBet;
+
+      const newDailyStats = { ...dailyStats };
+      if (!newDailyStats[today]) {
+        newDailyStats[today] = { totalWagered: 0, netProfit: 0 };
+      }
+      newDailyStats[today].totalWagered += roundBet;
+      newDailyStats[today].netProfit += netProfit;
+
+      setDailyStats(newDailyStats);
+
 
       const userRef = doc(db, "blackjackStats", user.uid);
       updateDoc(userRef, {
@@ -689,6 +754,10 @@ export default function BlackjackGame() {
         longestLossStreak: newLongestLossStreak,
         currentWinStreak: newCurrentWinStreak,
         currentLossStreak: newCurrentLossStreak,
+        dailyStats: newDailyStats,
+        moveStats: newMoveStats,
+        winStreaks: newWinStreaks,
+        lossStreaks: newLossStreaks,
       });
 
       setBetLocked(false);
