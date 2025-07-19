@@ -147,6 +147,12 @@ export default function BlackjackGame() {
   const [correctMoves, setCorrectMoves] = useState(0);
   const [wrongMoves, setWrongMoves] = useState(0);
   const [handsPlayed, setHandsPlayed] = useState(0);
+
+  const [currentWinStreak, setCurrentWinStreak] = useState(0);
+  const [currentLossStreak, setCurrentLossStreak] = useState(0);
+  const [longestWinStreak, setLongestWinStreak] = useState(0);
+  const [longestLossStreak, setLongestLossStreak] = useState(0);
+
   const [chipAnimations, setChipAnimations] = useState([]); // e.g., ["idle", "toPlayer", "toDealer"]
   const [animationShown, setAnimationShown] = useState(false);
   const [chipsMerged, setChipsMerged] = useState([]); // Track if payout chips have been merged
@@ -204,12 +210,21 @@ export default function BlackjackGame() {
           setWrongMoves(data.wrongMoves || 0);
           setHandsPlayed(data.handsPlayed || 0);
           setCredits(data.credits || 0);
+          setLongestWinStreak(data.longestWinStreak || 0);
+          setLongestLossStreak(data.longestLossStreak || 0);
+          // Current streaks are not persisted, so they reset on load
+          setCurrentWinStreak(data.currentWinStreak || 0);
+          setCurrentLossStreak(data.currentLossStreak || 0);
         } else {
           // New user for the game, stats are 0
           setCorrectMoves(0);
           setWrongMoves(0);
           setHandsPlayed(0);
           setCredits(0);
+          setLongestWinStreak(0);
+          setLongestLossStreak(0);
+          setCurrentWinStreak(0);
+          setCurrentLossStreak(0);
         }
         setStatsLoading(false); // Stats are loaded
       },
@@ -617,26 +632,65 @@ export default function BlackjackGame() {
         return;
       }
       let payout = 0;
+      let roundWon = false;
+      let roundLost = false;
+
       results.forEach((result, i) => {
         const b = handBets[i];
         if (result === "win") {
+          roundWon = true;
           if (handTotal(playerHands[i]) == 21 && playerHands[i].length == 2) {
             payout += b * 2 + b;
           } else {
             payout += b * 2;
           }
-        } else if (result === "push") payout += b;
+        } else if (result === "push") {
+          payout += b;
+        } else if (result === "lose") {
+          roundLost = true;
+        }
         // lose: no payout
       });
-      if (payout > 0) {
-        const userRef = doc(db, "blackjackStats", user.uid);
-        updateDoc(userRef, {
-          credits: credits + payout,
-          correctMoves,
-          wrongMoves,
-          handsPlayed,
-        });
+
+      let newCurrentWinStreak = currentWinStreak;
+      let newCurrentLossStreak = currentLossStreak;
+      let newLongestWinStreak = longestWinStreak;
+      let newLongestLossStreak = longestLossStreak;
+
+      if (roundWon && !roundLost) { // Pure win
+        newCurrentWinStreak++;
+        newCurrentLossStreak = 0;
+        if (newCurrentWinStreak > newLongestWinStreak) {
+          newLongestWinStreak = newCurrentWinStreak;
+        }
+      } else if (roundLost && !roundWon) { // Pure loss
+        newCurrentLossStreak++;
+        newCurrentWinStreak = 0;
+        if (newCurrentLossStreak > newLongestLossStreak) {
+          newLongestLossStreak = newCurrentLossStreak;
+        }
+      } else { // Push or mixed results (e.g., win one hand, lose another)
+        newCurrentWinStreak = 0;
+        newCurrentLossStreak = 0;
       }
+
+      setCurrentWinStreak(newCurrentWinStreak);
+      setCurrentLossStreak(newCurrentLossStreak);
+      setLongestWinStreak(newLongestWinStreak);
+      setLongestLossStreak(newLongestLossStreak);
+
+      const userRef = doc(db, "blackjackStats", user.uid);
+      updateDoc(userRef, {
+        credits: credits + payout,
+        correctMoves,
+        wrongMoves,
+        handsPlayed,
+        longestWinStreak: newLongestWinStreak,
+        longestLossStreak: newLongestLossStreak,
+        currentWinStreak: newCurrentWinStreak,
+        currentLossStreak: newCurrentLossStreak,
+      });
+
       setBetLocked(false);
     } else {
       return;

@@ -14,6 +14,8 @@ export default function Profile() {
     correctMoves: 0,
     wrongMoves: 0,
     handsPlayed: 0,
+    longestWinStreak: 0,
+    longestLossStreak: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
   const [credits, setCredits] = useState(0);
@@ -30,17 +32,28 @@ export default function Profile() {
     }
     setStatsLoading(true);
     const statsRef = doc(db, "blackjackStats", user.uid);
-    const unsubStats = onSnapshot(
+    const unsubscribe = onSnapshot(
       statsRef,
       (docSnap) => {
         if (docSnap.exists()) {
+          const data = docSnap.data();
           setStats({
-            correctMoves: docSnap.data().correctMoves || 0,
-            wrongMoves: docSnap.data().wrongMoves || 0,
-            handsPlayed: docSnap.data().handsPlayed || 0,
+            correctMoves: data.correctMoves || 0,
+            wrongMoves: data.wrongMoves || 0,
+            handsPlayed: data.handsPlayed || 0,
+            longestWinStreak: data.longestWinStreak || 0,
+            longestLossStreak: data.longestLossStreak || 0,
           });
+          setCredits(data.credits || 0);
         } else {
-          setStats({ correctMoves: 0, wrongMoves: 0, handsPlayed: 0 });
+          setStats({
+            correctMoves: 0,
+            wrongMoves: 0,
+            handsPlayed: 0,
+            longestWinStreak: 0,
+            longestLossStreak: 0,
+          });
+          setCredits(0);
         }
         setStatsLoading(false);
       },
@@ -49,14 +62,8 @@ export default function Profile() {
         setStatsLoading(false);
       }
     );
-    const userRef = doc(db, "blackjackStats", user.uid);
-    const unsubCredits = onSnapshot(userRef, (docSnap) => {
-      setCredits(docSnap.exists() ? docSnap.data().credits || 0 : 0);
-    });
-    return () => {
-      unsubStats();
-      unsubCredits();
-    };
+
+    return () => unsubscribe();
   }, [user, authLoading, router]);
 
   if (authLoading || statsLoading) {
@@ -159,13 +166,13 @@ export default function Profile() {
             className="btn btn-outline ml-4"
             onClick={() => setBuyModal(true)}
           >
-            Buy 10 Credits
+            Buy Credits
           </button>
         </div>
         {buyModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white text-black p-6 rounded shadow flex flex-col gap-4 min-w-[300px]">
-              <h2 className="text-xl font-bold mb-2">Buy 10 Credits</h2>
+              <h2 className="text-xl font-bold mb-2">Buy Credits</h2>
               <label className="flex flex-col gap-1">
                 Quantity:
                 <input
@@ -216,6 +223,14 @@ export default function Profile() {
           <div>
             <span className="font-semibold">Hands Played:</span>{" "}
             {stats.handsPlayed}
+          </div>
+          <div>
+            <span className="font-semibold">Longest Win Streak:</span>{" "}
+            {stats.longestWinStreak}
+          </div>
+          <div>
+            <span className="font-semibold">Longest Loss Streak:</span>{" "}
+            {stats.longestLossStreak}
           </div>
         </div>
       </div>
