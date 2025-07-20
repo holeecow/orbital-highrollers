@@ -742,7 +742,7 @@ export default function BlackjackGame() {
               </li>
             </ul>
             <button
-              className="btn  text-white px-6 py-2 rounded mb-3"
+              className="btn  px-6 py-2 rounded mb-3"
               onClick={handleCloseTutorial}
             >
               Got it!
