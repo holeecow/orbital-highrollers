@@ -105,13 +105,7 @@ export default function Login() {
           <div className="flex items-center mx-auto ">
             <div className="flex-1">
               <div className="text-center">
-                <div className="flex justify-center mx-auto ">
-                  <img
-                    className="w-auto h-7 sm:h-8"
-                    src="https://merakiui.com/images/logo.svg"
-                    alt=""
-                  ></img>
-                </div>
+                <div className="flex justify-center mx-auto "></div>
 
                 <p className="mt-3 text-gray-500 dark:text-gray-300">
                   Sign in to access your account
@@ -158,7 +152,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setResetCard(true)}
-                        className="text-sm text-gray-400 focus:text-blue-500 hover:text-blue-500 hover:underline cursor-pointer"
+                        className="text-sm  focus:text-blue-500 hover:text-blue-500 hover:underline cursor-pointer"
                       >
                         Forgot password?
                       </button>

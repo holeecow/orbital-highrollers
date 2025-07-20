@@ -275,11 +275,15 @@ export default function BlackjackGame() {
 
   // useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
+    const accumulate = () => {
+      return playerHands.some((hand) => handTotal(hand) < 22);
+    };
     const runDealer = async () => {
       if (!dealerTurn || phase == "finished") return;
 
       let current = [...dealer];
-      while (handTotal(current) < 17) {
+
+      while (handTotal(current) < 17 && accumulate()) {
         const [card] = await drawCards(1);
         current.push(card);
         setDealer([...current]);
@@ -290,11 +294,7 @@ export default function BlackjackGame() {
         const playerTotal = handTotal(hand);
         const dealerTotal = handTotal(current);
         if (playerTotal > 21) return "lose";
-        if (
-          (playerTotal == 21 && hand.length == 2) ||
-          dealerTotal > 21 ||
-          (playerTotal > dealerTotal && playerTotal < 22)
-        )
+        if (dealerTotal > 21 || (playerTotal > dealerTotal && playerTotal < 22))
           return "win";
         if (playerTotal == dealerTotal) return "push";
         return "lose";
@@ -318,13 +318,11 @@ export default function BlackjackGame() {
           setResults(["win"]);
           setPhase("finished");
           setDealerTurn(true);
-
           return;
         }
         if (handTotal(playerHands[0]) > 21) {
           setResults(["lose"]);
           setPhase("finished");
-
           return;
         }
       } else {
@@ -504,7 +502,6 @@ export default function BlackjackGame() {
     });
     setCurrentHandIndex(0);
     setHasSplit(true);
-    // setResults([]);
   };
 
   const canDouble = () => {
@@ -513,7 +510,7 @@ export default function BlackjackGame() {
       phase === "playing" &&
       currentHand.length === 2 &&
       handTotal(currentHand) != 21
-    ); // removed these 2 conditions: handTotal(currentHand) >= 9 && handTotal(currentHand) <= 11
+    );
   };
 
   const double = async () => {
@@ -604,22 +601,6 @@ export default function BlackjackGame() {
       newHands[currentHandIndex] = [...newHands[currentHandIndex], card];
       return newHands;
     });
-    // if (handTotal(currentHand) < 22) {
-    //   const [card] = await drawCards(1);
-    //   setPlayerHands((prev) => {
-    //     const newHands = [...prev];
-    //     newHands[currentHandIndex] = [...newHands[currentHandIndex], card];
-    //     return newHands;
-    //   });
-    // } else {
-    //   // If bust, auto-stand or move to next hand if split
-    //   if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
-    //     setCurrentHandIndex(currentHandIndex + 1);
-    //   } else {
-    //     setPhase("dealer");
-    //     setDealerTurn(true);
-    //   }
-    // }
   };
 
   const stand = () => {
@@ -865,7 +846,7 @@ export default function BlackjackGame() {
               </li>
             </ul>
             <button
-              className="btn  text-white px-6 py-2 rounded mb-3"
+              className="btn  px-6 py-2 rounded mb-3"
               onClick={handleCloseTutorial}
             >
               Got it!
@@ -1015,7 +996,7 @@ export default function BlackjackGame() {
         )}
       </div>
       {/* For debugging*/}
-      {/* <p className="text-black">{phase}</p> */}
+      <p className="text-black">{phase}</p>
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
     </div>
   );
