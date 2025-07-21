@@ -128,7 +128,8 @@ export default function BlackjackGame() {
   const [playerHands, setPlayerHands] = useState([[]]); // Array of hands
   const [currentHandIndex, setCurrentHandIndex] = useState(0); // Which hand is being played
   const [handBets, setHandBets] = useState([0]); // Array of bets for each hand
-  const [hasSplit, setHasSplit] = useState(false); // Track if split has occurred
+  const [handWasSplit, setHandWasSplit] = useState(false); // Track if a split occurred in the round
+  const [playerHasHit, setPlayerHasHit] = useState(false); // Track if player has hit in the round
 
   // State for controlling the cards the dealer has
   const [dealer, setDealer] = useState([]);
@@ -393,7 +394,8 @@ export default function BlackjackGame() {
     setPlayerHands([[]]);
     setCurrentHandIndex(0);
     setHandBets([betInput]);
-    setHasSplit(false);
+    setHandWasSplit(false);
+    setPlayerHasHit(false);
     setDealer([]);
     setPhase("waiting");
     setResults([]);
@@ -440,7 +442,7 @@ export default function BlackjackGame() {
       currentHand.length === 2 &&
       pipValue(currentHand[0]) === pipValue(currentHand[1]) &&
       playerHands.length < 4 &&
-      !hasSplit // Change depending if we want to allow for multiple splits
+      !handWasSplit // Change depending if we want to allow for multiple splits
     );
   };
 
@@ -501,7 +503,7 @@ export default function BlackjackGame() {
       return newBets;
     });
     setCurrentHandIndex(0);
-    setHasSplit(true);
+    setHandWasSplit(true);
   };
 
   const canDouble = () => {
@@ -595,6 +597,7 @@ export default function BlackjackGame() {
       setWrongMoves((w) => w + 1);
     }
     setLastPlayerAction('hit');
+    setPlayerHasHit(true);
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
       const newHands = [...prev];
@@ -651,10 +654,22 @@ export default function BlackjackGame() {
       let roundWon = false;
       let roundLost = false;
 
+      if (handWasSplit) {
+        const allWin = results.every(r => r === 'win');
+        const allLose = results.every(r => r === 'lose');
+        if (allWin) roundWon = true;
+        if (allLose) roundLost = true;
+      } else {
+        results.forEach((result, i) => {
+          if (result === "win") roundWon = true;
+          if (result === "lose") roundLost = true;
+        });
+      }
+
+
       results.forEach((result, i) => {
         const b = handBets[i];
         if (result === "win") {
-          roundWon = true;
           if (handTotal(playerHands[i]) == 21 && playerHands[i].length == 2) {
             payout += b * 2 + b;
           } else {
@@ -669,10 +684,18 @@ export default function BlackjackGame() {
       });
 
       const newMoveStats = { ...moveStats };
-      if (lastPlayerAction) {
-        newMoveStats[lastPlayerAction].total++;
+      let actionToCredit = lastPlayerAction;
+      if (handWasSplit) {
+        actionToCredit = 'split';
+      } else if (playerHasHit) {
+        actionToCredit = 'hit';
+      }
+
+
+      if (actionToCredit) {
+        newMoveStats[actionToCredit].total++;
         if (roundWon && !roundLost) {
-            newMoveStats[lastPlayerAction].wins++;
+            newMoveStats[actionToCredit].wins++;
         }
       }
 
