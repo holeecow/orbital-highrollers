@@ -226,12 +226,14 @@ export default function BlackjackGame() {
           setLongestWinStreak(data.longestWinStreak || 0);
           setLongestLossStreak(data.longestLossStreak || 0);
           setDailyStats(data.dailyStats || {});
-          setMoveStats(data.moveStats || {
-            hit: { wins: 0, total: 0 },
-            stand: { wins: 0, total: 0 },
-            double: { wins: 0, total: 0 },
-            split: { wins: 0, total: 0 },
-          });
+          setMoveStats(
+            data.moveStats || {
+              hit: { wins: 0, total: 0 },
+              stand: { wins: 0, total: 0 },
+              double: { wins: 0, total: 0 },
+              split: { wins: 0, total: 0 },
+            }
+          );
           setWinStreaks(data.winStreaks || []);
           setLossStreaks(data.lossStreaks || []);
           // Current streaks are not persisted, so they reset on load
@@ -277,7 +279,10 @@ export default function BlackjackGame() {
   // useEffect hook to handle the logic when it is the dealer's turn
   useEffect(() => {
     const accumulate = () => {
-      return playerHands.some((hand) => handTotal(hand) < 22);
+      return playerHands.some(
+        (hand) =>
+          handTotal(hand) < 21 || (handTotal(hand) == 21 && hand.length != 2)
+      );
     };
     const runDealer = async () => {
       if (!dealerTurn || phase == "finished") return;
@@ -306,7 +311,7 @@ export default function BlackjackGame() {
     if (dealerTurn) {
       runDealer();
     }
-  }, [dealerTurn]); // was [dealerTurn, dealer, playerHands, drawCards]
+  }, [dealerTurn]);
 
   useEffect(() => {
     if (handTotal(dealer) == 21 && dealer.length == 2) {
@@ -314,34 +319,35 @@ export default function BlackjackGame() {
       setDealerTurn(true);
       return;
     } else {
-      if (playerHands.length == 1) {
-        if (handTotal(playerHands[0]) == 21 && playerHands[0].length == 2) {
-          setResults(["win"]);
-          setPhase("finished");
-          setDealerTurn(true);
-          return;
-        }
-        if (handTotal(playerHands[0]) > 21) {
-          setResults(["lose"]);
-          setPhase("finished");
-          return;
-        }
-      } else {
-        if (
-          (handTotal(playerHands[currentHandIndex]) == 21 &&
-            playerHands[currentHandIndex].length == 2) ||
-          handTotal(playerHands[currentHandIndex]) > 21
-        ) {
-          if (currentHandIndex < playerHands.length - 1) {
-            setCurrentHandIndex(currentHandIndex + 1);
-          } else {
-            setPhase("dealer");
-            setDealerTurn(true);
+      if (!dealerTurn) {
+        if (playerHands.length == 1) {
+          if (handTotal(playerHands[0]) == 21 && playerHands[0].length == 2) {
+            setResults(["win"]);
+            setPhase("finished");
+            return;
+          }
+          if (handTotal(playerHands[0]) > 21) {
+            setResults(["lose"]);
+            setPhase("finished");
+            return;
+          }
+        } else {
+          if (
+            (handTotal(playerHands[currentHandIndex]) == 21 &&
+              playerHands[currentHandIndex].length == 2) ||
+            handTotal(playerHands[currentHandIndex]) > 21
+          ) {
+            if (currentHandIndex < playerHands.length - 1) {
+              setCurrentHandIndex(currentHandIndex + 1);
+            } else {
+              setPhase("dealer");
+              setDealerTurn(true);
+            }
           }
         }
       }
     }
-  }, [dealer, playerHands, currentHandIndex, dealerTurn]);
+  }, [dealer, playerHands, currentHandIndex]);
 
   useEffect(() => {
     if (phase == "finished" && !animationShown) {
@@ -480,7 +486,7 @@ export default function BlackjackGame() {
     setFeedbackMessages((prev) => [msg, ...prev]);
     if (isCorrect) setCorrectMoves((c) => c + 1);
     else setWrongMoves((w) => w + 1);
-    setLastPlayerAction('split');
+    setLastPlayerAction("split");
     // Proceed with split logic
     const [card1, card2] = currentHand;
     const [card3, card4] = await drawCards(2);
@@ -551,7 +557,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
-    setLastPlayerAction('double');
+    setLastPlayerAction("double");
     // Draw one card and finish this hand
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
@@ -596,7 +602,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
-    setLastPlayerAction('hit');
+    setLastPlayerAction("hit");
     setPlayerHasHit(true);
     const [card] = await drawCards(1);
     setPlayerHands((prev) => {
@@ -629,7 +635,7 @@ export default function BlackjackGame() {
     } else {
       setWrongMoves((w) => w + 1);
     }
-    setLastPlayerAction('stand');
+    setLastPlayerAction("stand");
     // If stand, move to next hand, else dealer's turn
     if (playerHands.length > 1 && currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
@@ -655,8 +661,8 @@ export default function BlackjackGame() {
       let roundLost = false;
 
       if (handWasSplit) {
-        const allWin = results.every(r => r === 'win');
-        const allLose = results.every(r => r === 'lose');
+        const allWin = results.every((r) => r === "win");
+        const allLose = results.every((r) => r === "lose");
         if (allWin) roundWon = true;
         if (allLose) roundLost = true;
       } else {
@@ -665,7 +671,6 @@ export default function BlackjackGame() {
           if (result === "lose") roundLost = true;
         });
       }
-
 
       results.forEach((result, i) => {
         const b = handBets[i];
@@ -686,16 +691,15 @@ export default function BlackjackGame() {
       const newMoveStats = { ...moveStats };
       let actionToCredit = lastPlayerAction;
       if (handWasSplit) {
-        actionToCredit = 'split';
+        actionToCredit = "split";
       } else if (playerHasHit) {
-        actionToCredit = 'hit';
+        actionToCredit = "hit";
       }
-
 
       if (actionToCredit) {
         newMoveStats[actionToCredit].total++;
         if (roundWon && !roundLost) {
-            newMoveStats[actionToCredit].wins++;
+          newMoveStats[actionToCredit].wins++;
         }
       }
 
@@ -706,21 +710,24 @@ export default function BlackjackGame() {
       let newWinStreaks = [...winStreaks];
       let newLossStreaks = [...lossStreaks];
 
-      if (roundWon && !roundLost) { // Pure win
+      if (roundWon && !roundLost) {
+        // Pure win
         newCurrentWinStreak++;
         if (newCurrentLossStreak > 0) newLossStreaks.push(newCurrentLossStreak);
         newCurrentLossStreak = 0;
         if (newCurrentWinStreak > newLongestWinStreak) {
           newLongestWinStreak = newCurrentWinStreak;
         }
-      } else if (roundLost && !roundWon) { // Pure loss
+      } else if (roundLost && !roundWon) {
+        // Pure loss
         newCurrentLossStreak++;
         if (newCurrentWinStreak > 0) newWinStreaks.push(newCurrentWinStreak);
         newCurrentWinStreak = 0;
         if (newCurrentLossStreak > newLongestLossStreak) {
           newLongestLossStreak = newCurrentLossStreak;
         }
-      } else { // Push or mixed results (e.g., win one hand, lose another)
+      } else {
+        // Push or mixed results (e.g., win one hand, lose another)
         if (newCurrentWinStreak > 0) newWinStreaks.push(newCurrentWinStreak);
         if (newCurrentLossStreak > 0) newLossStreaks.push(newCurrentLossStreak);
         newCurrentWinStreak = 0;
@@ -746,7 +753,6 @@ export default function BlackjackGame() {
       newDailyStats[today].netProfit += netProfit;
 
       setDailyStats(newDailyStats);
-
 
       const userRef = doc(db, "blackjackStats", user.uid);
       updateDoc(userRef, {

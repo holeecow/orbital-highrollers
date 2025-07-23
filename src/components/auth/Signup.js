@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { auth, googleProvider } from "../../firebase";
+import Link from "next/link";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -81,75 +82,72 @@ export default function Signup() {
   };
 
   return (
-    <section className="bg-white dark:bg-gray-900 ">
-      <div className="flex min-h-screen ">
-        <div className="flex items-center w-full max-w-3xl p-8 mx-auto lg:px-12 lg:w-3/5">
-          <div className="w-full ">
-            <h1 className="text-2xl font-semibold tracking-wider text-gray-800 capitalize dark:text-white">
-              Get your free account now.
-            </h1>
-
-            <p className="mt-4 text-gray-500 dark:text-gray-400">
-              {/* &rsquo is a html identity since quotation marks are not accepted */}
-              Let&rsquo;s get you all set up so you can begin setting up your
-              profile and start tracking your moves.
-            </p>
-
-            {error && (
-              <div className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-                {error}
-              </div>
-            )}
-
-            <form
-              className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2"
-              onSubmit={SignUp}
-            >
-              <div>
-                <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  placeholder="johnsnow@example.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
-                />
-              </div>
-
-              <div>
-                <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">
-                  Password (at least 6 characters)
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  placeholder="Enter your password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-5 py-3 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="
-              flex w-full px-6 py-3 tracking-wide text-white transition-colors duration-300 transform  bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50 cursor-pointer"
-              >
-                Sign Up
-              </button>
-            </form>
-
-            <div className="mt-4">
-              <button
-                onClick={signUpWithGoogle}
-                className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
-              >
-                Sign up with Google
-              </button>
-            </div>
+    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg mx-auto">
+        <h1 className="text-2xl font-semibold tracking-wider text-gray-800 capitalize dark:text-white text-center mb-2">
+          Get your free account now.
+        </h1>
+        <p className="mb-6 text-gray-500 dark:text-gray-400 text-center">
+          Let&rsquo;s get you all set up so you can begin setting up your
+          profile and start tracking your moves.
+        </p>
+        {error && (
+          <div
+            className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg"
+            role="alert"
+          >
+            {error}
           </div>
+        )}
+        <form className="space-y-6" onSubmit={SignUp}>
+          <div>
+            <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              placeholder="johnsnow@example.com"
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm text-gray-600 dark:text-gray-200">
+              Password (at least 6 characters)
+            </label>
+            <input
+              type="password"
+              value={password}
+              placeholder="Enter your password"
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50 cursor-pointer"
+          >
+            Sign Up
+          </button>
+        </form>
+        <div className="mt-4">
+          <button
+            onClick={signUpWithGoogle}
+            className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
+          >
+            Sign up with Google
+          </button>
         </div>
+        <p className="mt-6 text-sm text-center text-gray-400">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-blue-500 focus:outline-none focus:underline hover:underline"
+          >
+            Log in.
+          </Link>
+        </p>
       </div>
     </section>
   );

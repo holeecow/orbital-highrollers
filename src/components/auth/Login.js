@@ -23,6 +23,9 @@ export default function Login() {
     setError(null); // Reset error before new signin attempt
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("loginSuccess", "1");
+      }
       router.push("/"); // navigate to home page when the user really is signed in
     } catch (err) {
       if (err.code === "auth/invalid-credential") {
@@ -47,6 +50,9 @@ export default function Login() {
         setError("No account found with this email. Please sign up.");
       } else {
         // Existing user, allow login.
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("loginSuccess", "1");
+        }
         router.push("/"); // Navigate to home page on successful sign-in
       }
     } catch (err) {
@@ -100,108 +106,90 @@ export default function Login() {
   return (
     <>
       {overlay}
-      <div className="min-h-screen bg-cover bg-center flex items-center justify-center">
-        <div className="flex justify-center">
-          <div className="flex items-center mx-auto ">
-            <div className="flex-1">
-              <div className="text-center">
-                <div className="flex justify-center mx-auto "></div>
-
-                <p className="mt-3 text-gray-500 dark:text-gray-300">
-                  Sign in to access your account
-                </p>
-              </div>
-
-              {error && (
-                <div
-                  className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg"
-                  role="alert"
-                >
-                  {error}
-                </div>
-              )}
-
-              <div className="mt-8">
-                <form onSubmit={signIn}>
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block mb-2 text-sm text-gray-600 dark:text-gray-200"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      placeholder="example@example.com"
-                      className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="flex justify-between mb-2">
-                      <label
-                        htmlFor="password"
-                        className="text-sm text-gray-600 dark:text-gray-200"
-                      >
-                        Password
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setResetCard(true)}
-                        className="text-sm  focus:text-blue-500 hover:text-blue-500 hover:underline cursor-pointer"
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-
-                    <input
-                      type="password"
-                      name="password"
-                      id="password"
-                      placeholder="Your Password"
-                      className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    {/* <Link to="/authdetails"> */}
-                    <button
-                      type="submit"
-                      className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50 cursor-pointer"
-                    >
-                      Log in
-                    </button>
-                    {/* </Link> */}
-                  </div>
-                </form>
-
-                <div className="mt-4">
-                  <button
-                    onClick={signInWithGoogle}
-                    className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
-                  >
-                    Sign in with Google
-                  </button>
-                </div>
-
-                <p className="mt-6 text-sm text-center text-gray-400">
-                  Don&#x27;t have an account yet?{" "}
-                  <Link
-                    href="/signup"
-                    className="text-blue-500 focus:outline-none focus:underline hover:underline"
-                  >
-                    Sign up.
-                  </Link>
-                </p>
-              </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg mx-auto">
+          <h1 className="text-2xl font-semibold tracking-wider text-gray-800 capitalize dark:text-white text-center mb-2">
+            Log in to your account
+          </h1>
+          <p className="mb-6 text-gray-500 dark:text-gray-400 text-center">
+            Sign in to access your account
+          </p>
+          {error && (
+            <div
+              className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg"
+              role="alert"
+            >
+              {error}
             </div>
+          )}
+          <form onSubmit={signIn} className="space-y-6">
+            <div>
+              <label
+                htmlFor="email"
+                className="block mb-2 text-sm text-gray-600 dark:text-gray-200"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                placeholder="johnsnow@example.com"
+                className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <div className="flex justify-between mb-2">
+                <label
+                  htmlFor="password"
+                  className="text-sm text-gray-600 dark:text-gray-200"
+                >
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setResetCard(true)}
+                  className="text-sm focus:text-blue-500 hover:text-blue-500 hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="Your Password"
+                className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-md dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:bg-blue-400 focus:ring focus:ring-blue-300 focus:ring-opacity-50 cursor-pointer"
+            >
+              Log in
+            </button>
+          </form>
+          <div className="mt-4">
+            <button
+              onClick={signInWithGoogle}
+              className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-red-500 rounded-lg hover:bg-red-400 focus:outline-none focus:bg-red-400 focus:ring focus:ring-red-300 focus:ring-opacity-50 cursor-pointer"
+            >
+              Sign in with Google
+            </button>
           </div>
+          <p className="mt-6 text-sm text-center text-gray-400">
+            Don&apos;t have an account yet?{" "}
+            <Link
+              href="/signup"
+              className="text-blue-500 focus:outline-none focus:underline hover:underline"
+            >
+              Sign up.
+            </Link>
+          </p>
         </div>
       </div>
     </>
