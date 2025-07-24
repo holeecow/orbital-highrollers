@@ -28,9 +28,7 @@ export default function Header() {
           alt="Logo"
           className="h-20 w-18 object-contain"
         />
-        <span className="font-semibold text-xl tracking-tight">
-          BJ Basics
-        </span>
+        <span className="font-semibold text-xl tracking-tight">BJ Basics</span>
       </div>
       <div className="block lg:hidden">
         <button className="flex items-center px-3 py-2 border rounded text-teal-200 border-teal-400 hover:text-white hover:border-white">
