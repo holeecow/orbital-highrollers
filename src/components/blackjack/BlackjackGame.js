@@ -996,9 +996,12 @@ export default function BlackjackGame() {
           ))}
         </div>
       )}
+      <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
       {/* controls */}
       <div
-        className={phase == "playing" ? "flex gap-4" : "flex justify-center"}
+        className={
+          phase == "playing" ? "flex gap-4 mb-8" : "flex justify-center mb-8"
+        }
       >
         <button className="btn" onClick={deal} disabled={statsLoading}>
           {statsLoading ? "Loading..." : "Deal"}
@@ -1024,9 +1027,6 @@ export default function BlackjackGame() {
           </>
         )}
       </div>
-      {/* For debugging*/}
-      <p className="text-black">{phase}</p>
-      <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
     </div>
   );
 }
