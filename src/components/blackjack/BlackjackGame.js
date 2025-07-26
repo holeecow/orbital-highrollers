@@ -788,7 +788,7 @@ export default function BlackjackGame() {
   }, [credits, prevCredits]);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 pb-24 min-h-[700px] w-full max-w-2xl flex flex-col items-center gap-6 relative">
+    <div className="bg-white rounded-xl shadow-lg p-8  min-h-[700px] overflow-auto w-full max-w-2xl flex flex-col items-center gap-6 relative mb-6">
       {/* Show Tutorial Button */}
       <button
         className="absolute top-4 right-4 bg-gray-200 text-black w-10 h-10 flex items-center justify-center rounded-full text-sm shadow hover:bg-gray-300 z-50 cursor-pointer"
@@ -999,9 +999,7 @@ export default function BlackjackGame() {
       <p className="text-sm text-gray-400">Cards left in shoe: {remaining}</p>
       {/* controls */}
       <div
-        className={
-          phase == "playing" ? "flex gap-4 mb-8" : "flex justify-center mb-8"
-        }
+        className={phase == "playing" ? "flex gap-4 " : "flex justify-center "}
       >
         <button className="btn" onClick={deal} disabled={statsLoading}>
           {statsLoading ? "Loading..." : "Deal"}
