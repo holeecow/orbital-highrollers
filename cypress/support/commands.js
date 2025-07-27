@@ -23,3 +23,22 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('login', (email, password) => {
+  cy.session([email, password], () => {
+    // Intercept the Firebase sign-in call
+    cy.intercept('POST', '**/accounts:signInWithPassword**').as('firebaseLogin');
+
+    cy.visit('/login');
+    cy.get('input[name="email"]').type(email);
+    cy.get('input[name="password"]').type(password);
+    cy.get('button[type="submit"]').click();
+
+    // Wait for the login request to complete and check for a 200 (OK) status
+    cy.wait('@firebaseLogin').its('response.statusCode').should('eq', 200);
+
+    // A more reliable way to ensure the app has processed the login
+    // is to check for the user's email in the header.
+    cy.contains(email).should('be.visible');
+  });
+});

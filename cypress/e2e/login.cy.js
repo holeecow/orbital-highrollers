@@ -1,6 +1,6 @@
 describe('Login Page', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:3000/login');
+    cy.visit('/login');
   });
 
   it("Check if 'Sign up' button brings user to sign up page", () => {

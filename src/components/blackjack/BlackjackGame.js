@@ -841,7 +841,10 @@ export default function BlackjackGame() {
             min={1}
             max={credits}
             value={betInput}
-            onChange={(e) => setBetInput(Number(e.target.value))}
+            onChange={(e) => {
+              const value = e.target.value;
+              setBetInput(value === '' ? '' : Number(value));
+            }}
             disabled={phase === "playing" || betLocked}
             className="border rounded p-2 w-24 text-black"
           />
