@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 serviceAccountKey.json
+
+# Cypress
+cypress.env.json
+/cypress/screenshots/
+/cypress/videos/
