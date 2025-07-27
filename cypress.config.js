@@ -29,6 +29,31 @@ module.exports = defineConfig({
             throw error; // Fail the test if the user isn't found
           }
         },
+        async setCredits({ email, amount }) {
+          try {
+            const user = await admin.auth().getUserByEmail(email);
+            await db.collection('blackjackStats').doc(user.uid).set({
+              credits: amount,
+            }, { merge: true });
+            return null;
+          } catch (error) {
+            console.error('Error setting credits:', error);
+            return null;
+          }
+        },
+        async getCredits({ email }) {
+          try {
+            const user = await admin.auth().getUserByEmail(email);
+            const statsDoc = await db.collection('blackjackStats').doc(user.uid).get();
+            if (!statsDoc.exists) {
+              return 0;
+            }
+            return statsDoc.data().credits || 0;
+          } catch (error) {
+            console.error('Error getting credits:', error);
+            return null;
+          }
+        },
       });
     },
   },

@@ -111,7 +111,7 @@ describe('Blackjack Game', () => {
   });
 });
 
-describe.only('Blackjack Game - Logged In Features', () => {
+describe('Blackjack Game - Logged In Features', () => {
   beforeEach(() => {
     // Log in before each test in this suite
     cy.login(Cypress.env('TEST_USER_EMAIL'), Cypress.env('TEST_USER_PASSWORD'));
